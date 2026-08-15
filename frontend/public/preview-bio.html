@@ -89,7 +89,14 @@ body{font-family:var(--font-body);-webkit-font-smoothing:antialiased;overflow:hi
   color:var(--accent-soft);transition:background .5s,border-color .5s,color .5s}
 .access b{display:block;font-weight:500;color:var(--text-faint);letter-spacing:.12em;text-transform:uppercase;font-size:9px;margin-bottom:5px}
 
-.history{flex:1;overflow-y:auto;margin-top:20px;min-height:0}
+.docs{margin-top:18px;max-height:34vh;overflow-y:auto;flex:0 0 auto}
+.doc-item{width:100%;text-align:left;background:transparent;border:1px solid transparent;color:var(--text-dim);
+  font-family:var(--font-body);font-size:12px;line-height:1.35;padding:7px 10px;border-radius:8px;cursor:pointer;
+  transition:background .18s,color .18s,border-color .18s}
+.doc-item:hover:not(:disabled){background:var(--surface-hi);color:var(--text);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.doc-item:disabled{opacity:.45;cursor:default}
+.doc-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.history{flex:1;overflow-y:auto;margin-top:16px;min-height:0}
 .history-item{width:100%;text-align:left;background:transparent;border:none;color:var(--text-dim);font-family:var(--font-body);
   font-size:12.5px;padding:8px 11px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .18s,color .18s}
 .history-item:hover{background:var(--surface-hi);color:var(--text)}
@@ -299,7 +306,8 @@ const T = {
     login:"Войти", logout:"Выйти",
     fragment:"Фрагмент документа", showFragment:"показать фрагмент", hideFragment:"скрыть фрагмент",
     attach:"Документ", summarizing:"суммаризирую документ", uploaded:"Загружен документ",
-    summaryOf:"Краткое изложение",
+    summaryOf:"Краткое изложение", docs:"Документы", docsEmpty:"Войдите, чтобы увидеть документы вуза",
+    summarizeDoc:"Краткое изложение документа",
     modalTitle:"Вход в систему университета",
     modalLead:"Учётная запись выдаётся университетом. Роль определяется учётной записью — выбрать её вручную нельзя.",
     fieldId:"Университетский ID", fieldCode:"Код доступа", submit:"Войти", cancel:"Отмена",
@@ -327,7 +335,8 @@ const T = {
     login:"Sign in", logout:"Sign out",
     fragment:"Document excerpt", showFragment:"show excerpt", hideFragment:"hide excerpt",
     attach:"Document", summarizing:"summarising document", uploaded:"Uploaded document",
-    summaryOf:"Summary",
+    summaryOf:"Summary", docs:"Documents", docsEmpty:"Sign in to see university documents",
+    summarizeDoc:"Document summary",
     modalTitle:"University sign-in",
     modalLead:"Accounts are issued by the university. Your role comes from the account — it cannot be chosen manually.",
     fieldId:"University ID", fieldCode:"Access code", submit:"Sign in", cancel:"Cancel",
@@ -392,6 +401,7 @@ function App(){
   const [code, setCode] = useState("");
   const [bad, setBad] = useState(false);
   const [open, setOpen] = useState(null);   // раскрытый фрагмент источника
+  const [docs, setDocs] = useState([]);
   const fileRef = useRef(null);
   const scrollRef = useRef(null);
 
@@ -400,6 +410,17 @@ function App(){
   const isGuest = role === "guest";
 
   useEffect(() => { document.documentElement.lang = lang; }, [lang]);
+
+  // Список документов, доступных текущей роли. Он разный у каждой роли —
+  // это витрина того же разграничения, что и в поиске.
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_BASE}/documents?role=${role}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => { if (!cancelled) setDocs(Array.isArray(d) ? d : []); })
+      .catch(() => { if (!cancelled) setDocs([]); });
+    return () => { cancelled = true; };
+  }, [role]);
 
   useEffect(() => {
     function onResize(){
@@ -435,6 +456,38 @@ function App(){
     if (locked){ setModal(true); return; }
     setRole(id);
     if (narrow) setRail(true);
+  }
+
+  async function summarizeDoc(doc){
+    if (loading) return;
+    const turn = { question:`${t.summarizeDoc}: ${doc.title}`, answer:null, sources:[], error:null };
+    setByRole((p) => ({ ...p, [role]: [...p[role], turn] }));
+    setLoading(true);
+    if (narrow) setRail(true);
+    try {
+      const res = await fetch(`${API_BASE}/summarize_document`, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ role, doc_id: doc.id, lang }),
+      });
+      if (!res.ok){
+        const err = await res.json().catch(() => ({}));
+        throw new Error(formatError(err, res.status));
+      }
+      const data = await res.json();
+      setByRole((p) => {
+        const list = [...p[role]];
+        list[list.length - 1] = { ...turn, answer:data.summary,
+          sources:[{ id:doc.id, title:doc.title, score:1, excerpt:doc.preview }] };
+        return { ...p, [role]: list };
+      });
+    } catch (e){
+      setByRole((p) => {
+        const list = [...p[role]];
+        list[list.length - 1] = { ...turn, error:e.message };
+        return { ...p, [role]: list };
+      });
+    } finally { setLoading(false); }
   }
 
   async function send(preset){
@@ -563,7 +616,19 @@ function App(){
           {t.access[role]}
         </div>
 
-        <div className="history hide-on-rail reveal" style={{ animationDelay:"230ms" }}>
+        <div className="docs hide-on-rail reveal" style={{ animationDelay:"215ms" }}>
+          <p className="side-label">{t.docs}{docs.length > 0 && ` · ${docs.length}`}</p>
+          {docs.length === 0
+            ? <p className="history-empty">{t.docsEmpty}</p>
+            : docs.map((d) => (
+                <button key={d.id} className="doc-item" title={d.preview}
+                  onClick={() => summarizeDoc(d)} disabled={loading}>
+                  {d.title}
+                </button>
+              ))}
+        </div>
+
+        <div className="history hide-on-rail reveal" style={{ animationDelay:"250ms" }}>
           <p className="side-label">{t.history}</p>
           {turns.length === 0
             ? <p className="history-empty">{t.historyEmpty}</p>
