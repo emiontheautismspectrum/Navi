@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.agents import get_system_prompt
-from app.data.documents import add_document, get_documents_for_role
+from app.data.documents import add_document, find_by_client_id, get_documents_for_role
 from app.llm_client import call_llm
 from app.rag import retriever
 
@@ -227,6 +227,7 @@ class UploadRequest(BaseModel):
     title: str
     content: str
     uploaded_by: str = ""
+    client_id: str = ""   # идентификатор из браузера, чтобы не плодить дубли
 
 
 @app.post("/documents/upload", response_model=DocItem)
@@ -242,7 +243,14 @@ def upload_document(req: UploadRequest):
     if not req.title.strip() or not req.content.strip():
         raise HTTPException(status_code=400, detail="Пустой документ")
 
+    # Повторная синхронизация из браузера не должна создавать копию
+    existing = find_by_client_id(req.client_id, req.role)
+    if existing is not None:
+        return DocItem(id=existing["id"], title=existing["title"],
+                       preview=_excerpt(existing["content"], 160))
+
     doc = add_document(
+        client_id=req.client_id[:64],
         title=req.title.strip()[:200],
         content=req.content.strip()[:40000],
         roles=[req.role],

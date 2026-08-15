@@ -36,8 +36,8 @@ export const listDocuments = (role) =>
 export const summarizeDocument = (role, doc_id, lang) =>
   req("/summarize_document", json({ role, doc_id, lang })).then((r) => r.json());
 
-export const uploadDocument = (role, title, content, uploaded_by) =>
-  req("/documents/upload", json({ role, title, content, uploaded_by })).then((r) => r.json());
+export const uploadDocument = (role, title, content, uploaded_by, client_id) =>
+  req("/documents/upload", json({ role, title, content, uploaded_by, client_id })).then((r) => r.json());
 
 export const createTicket = (role, question, contact, uploaded_by) =>
   req("/ticket", json({ role, question, contact, uploaded_by })).then((r) => r.json());

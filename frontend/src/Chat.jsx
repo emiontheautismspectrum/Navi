@@ -13,6 +13,33 @@ const DEMO_CODE = "demo";
  *  разные люди на одном компьютере не видят диалоги друг друга. */
 const histKey = (uid) => `navi:history:${uid || "guest"}`;
 
+/** Загруженные документы храним и в браузере под тем же ID.
+ *  Сервер держит их в памяти и теряет при перезапуске (на бесплатном
+ *  тарифе Render он засыпает через 15 минут простоя), поэтому при
+ *  следующем заходе документы восстанавливаются отсюда. */
+const docsKey = (uid) => `navi:docs:${uid || "guest"}`;
+const MAX_DOC_CHARS = 200000;
+
+function loadLocalDocs(uid) {
+  try {
+    const raw = localStorage.getItem(docsKey(uid));
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalDoc(uid, doc) {
+  try {
+    const all = loadLocalDocs(uid).filter((d) => d.client_id !== doc.client_id);
+    all.push(doc);
+    localStorage.setItem(docsKey(uid), JSON.stringify(all));
+  } catch {
+    /* переполнение хранилища — документ просто не переживёт перезаход */
+  }
+}
+
 function loadHistory(uid) {
   try {
     const raw = localStorage.getItem(histKey(uid));
@@ -70,9 +97,29 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
 
   useEffect(() => {
     let dead = false;
-    api.listDocuments(agent)
-      .then((d) => { if (!dead) setDocs(Array.isArray(d) ? d : []); })
-      .catch(() => { if (!dead) setDocs([]); });
+
+    async function sync() {
+      // Сначала возвращаем на сервер документы, сохранённые в браузере.
+      // Повторная отправка безопасна: сервер узнаёт их по client_id
+      // и не создаёт копий.
+      if (account && agent !== "guest") {
+        const mine = loadLocalDocs(account.id).filter((d) => d.role === agent);
+        for (const d of mine) {
+          try {
+            await api.uploadDocument(agent, d.title, d.content, account.id, d.client_id);
+          } catch { /* сервер недоступен — покажем то, что есть */ }
+          if (dead) return;
+        }
+      }
+      try {
+        const list = await api.listDocuments(agent);
+        if (!dead) setDocs(Array.isArray(list) ? list : []);
+      } catch {
+        if (!dead) setDocs([]);
+      }
+    }
+
+    sync();
     return () => { dead = true; };
   }, [agent, account]);
 
@@ -171,14 +218,20 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
     }
 
     const text = await file.text();
+    const title = file.name.replace(/\.[^.]+$/, "");
+    const clientId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
     push({ question: `${t.uploaded}: ${file.name}`, answer: null, sources: [], error: null });
     setLoading(true);
     try {
       const [sum, doc] = await Promise.all([
         api.summarizeText(agent, text, lang),
-        api.uploadDocument(agent, file.name.replace(/\.[^.]+$/, ""), text, account?.id || "")
+        api.uploadDocument(agent, title, text, account?.id || "", clientId)
           .catch(() => null),
       ]);
+      if (doc && text.length <= MAX_DOC_CHARS) {
+        saveLocalDoc(account?.id, { client_id: clientId, role: agent, title, content: text });
+      }
       patchLast({ answer: sum.summary, note: t.addedToLibrary });
       if (doc?.id) {
         setFreshDoc(doc.id);

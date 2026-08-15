@@ -146,7 +146,23 @@ def get_documents_for_role(role: str):
     return [d for d in DOCUMENTS + UPLOADED if role in d["roles"]]
 
 
-def add_document(title: str, content: str, roles: list, uploaded_by: str = ""):
+def find_by_client_id(client_id: str, role: str):
+    """Ищет ранее загруженный документ по идентификатору клиента.
+
+    Нужно, чтобы при повторной синхронизации из браузера документ не
+    добавлялся заново: сервер мог перезапуститься и потерять память,
+    а мог и не терять — в обоих случаях результат должен быть один.
+    """
+    if not client_id:
+        return None
+    return next(
+        (d for d in UPLOADED if d.get("client_id") == client_id and role in d["roles"]),
+        None,
+    )
+
+
+def add_document(title: str, content: str, roles: list, uploaded_by: str = "",
+                 client_id: str = ""):
     """Добавляет документ в библиотеку и возвращает его."""
     _counter["n"] += 1
     doc = {
@@ -155,6 +171,7 @@ def add_document(title: str, content: str, roles: list, uploaded_by: str = ""):
         "roles": list(roles),
         "content": content,
         "uploaded_by": uploaded_by,
+        "client_id": client_id,
         "uploaded": True,
     }
     UPLOADED.append(doc)
