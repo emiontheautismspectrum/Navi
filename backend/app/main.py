@@ -42,6 +42,7 @@ class SourceDoc(BaseModel):
     id: str
     title: str
     score: float
+    excerpt: str = ""   # фрагмент, на котором построен ответ
 
 
 class ChatResponse(BaseModel):
@@ -54,6 +55,20 @@ EN_INSTRUCTION = (
     "even though these instructions are written in Russian. Keep document "
     "titles in their original language."
 )
+
+
+def _excerpt(text: str, limit: int = 340) -> str:
+    """Короткий фрагмент документа для показа в карточке источника.
+    Обрезаем по границе предложения, чтобы не рвать слова."""
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    for sep in (". ", "! ", "? "):
+        idx = cut.rfind(sep)
+        if idx > limit * 0.5:
+            return cut[: idx + 1]
+    return cut.rsplit(" ", 1)[0] + "…"
 
 
 def _with_lang(prompt: str, lang: str) -> str:
@@ -100,7 +115,12 @@ def chat(req: ChatRequest):
         raise HTTPException(status_code=502, detail=f"Ошибка LLM API: {e}")
 
     sources = [
-        SourceDoc(id=doc["id"], title=doc["title"], score=round(float(score), 3))
+        SourceDoc(
+            id=doc["id"],
+            title=doc["title"],
+            score=round(float(score), 3),
+            excerpt=_excerpt(doc["content"]),
+        )
         for doc, score in retrieved
     ]
     return ChatResponse(reply=reply_text, sources=sources)
