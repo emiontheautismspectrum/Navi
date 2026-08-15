@@ -22,7 +22,21 @@ function Root() {
     document.body.dataset.theme = theme;
   }, [lang, theme]);
 
+  // Запуск системы: круг расходится из точки логотипа и накрывает
+  // экран, под ним подменяется маршрут — переход выглядит как
+  // раскрытие системы из самого знака.
+  const [burst, setBurst] = useState(null);
+
   const go = (r) => { location.hash = r === "app" ? "#/app" : "#/"; setRoute(r); };
+
+  function launch(origin) {
+    if (!origin) { go("app"); return; }
+    const { x, y } = origin;
+    const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    setBurst({ x, y, r });
+    setTimeout(() => go("app"), 380);   // маршрут меняется под накрытым экраном
+    setTimeout(() => setBurst(null), 900);
+  }
 
   const shared = { lang, setLang, theme, setTheme };
 
@@ -32,7 +46,14 @@ function Root() {
       <div className="grain" />
       {route === "app"
         ? <Chat {...shared} onHome={() => go("landing")} />
-        : <Landing {...shared} onEnter={() => go("app")} />}
+        : <Landing {...shared} onEnter={launch} />}
+
+      {burst && (
+        <span className="burst" style={{
+          left: burst.x - burst.r, top: burst.y - burst.r,
+          width: burst.r * 2, height: burst.r * 2,
+        }} />
+      )}
     </div>
   );
 }

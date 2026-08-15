@@ -280,3 +280,41 @@ section{padding:60px 0}
 ::-webkit-scrollbar{width:9px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--rule);border-radius:5px}
+
+
+/* ─── Переключатели в шапке: узкие, не тянутся ─── */
+.tgl-sm{flex:0 0 auto;width:38px;height:32px;padding:0}
+.nav .tgl{flex:0 0 auto}
+
+/* ─── Меню выбора языка ─── */
+.langbox{position:relative;flex:0 0 auto}
+.langmenu{position:absolute;top:calc(100% + 6px);right:0;z-index:50;margin:0;padding:5px;list-style:none;
+  min-width:158px;background:var(--deep);border:1px solid var(--rule);border-radius:var(--r-md);
+  box-shadow:0 14px 40px rgba(0,0,0,.35);animation:rise .2s var(--ease) both}
+.langmenu.up{top:auto;bottom:calc(100% + 6px)}
+.langmenu li{margin:0}
+.langmenu button{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:none;
+  color:var(--text-dim);font-family:var(--font-body);font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer;text-align:left;transition:all .16s}
+.langmenu button:hover{background:var(--surface-hi);color:var(--text)}
+.langmenu button.on{color:var(--accent)}
+.langmenu .code{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;opacity:.7;width:22px;flex:none}
+
+/* ─── Живой логотип в шапке ─── */
+.logo-launch{background:transparent;border:1px solid transparent;border-radius:50%;padding:5px;cursor:pointer;
+  display:grid;place-items:center;flex:0 0 auto;transition:transform .3s var(--ease),border-color .4s ease,box-shadow .4s ease}
+.logo-launch:hover{transform:scale(1.16);border-color:color-mix(in srgb,var(--accent) 45%,transparent);
+  box-shadow:0 0 22px color-mix(in srgb,var(--accent) 35%,transparent);animation:logoBeat 1.4s ease-in-out infinite}
+.logo-launch:active{transform:scale(.94)}
+.logo-launch:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@keyframes logoBeat{0%,100%{transform:scale(1.13)}50%{transform:scale(1.24)}}
+
+/* ─── Раскрытие системы из логотипа ─── */
+.burst{position:fixed;z-index:200;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,var(--accent) 0%,color-mix(in srgb,var(--accent) 70%,var(--abyss)) 55%,var(--abyss) 100%);
+  transform:scale(0);animation:burstOut .82s var(--ease) forwards}
+@keyframes burstOut{
+  0%{transform:scale(0);opacity:1}
+  42%{transform:scale(1);opacity:1}
+  100%{transform:scale(1);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){.burst{display:none}.logo-launch:hover{animation:none}}

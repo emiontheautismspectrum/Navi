@@ -1,5 +1,7 @@
+import { useState, useRef } from "react";
 import { Mark, ICONS, UI } from "./Brand.jsx";
 import { T } from "./i18n.js";
+import LangMenu from "./LangMenu.jsx";
 
 const AGENT_BLURB = {
   ru: {
@@ -17,6 +19,30 @@ const AGENT_BLURB = {
 export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
   const t = T[lang];
   const roles = ["student", "teacher", "admin"];
+  const logoRef = useRef(null);
+  // логотип перебирает цвета агентов при наведении — как при
+  // переключении ролей внутри системы
+  const [hoverAgent, setHoverAgent] = useState("student");
+  const cycle = useRef(null);
+
+  function startCycle() {
+    const order = ["student", "teacher", "admin"];
+    let i = 0;
+    cycle.current = setInterval(() => {
+      i = (i + 1) % order.length;
+      setHoverAgent(order[i]);
+    }, 520);
+  }
+  function stopCycle() {
+    clearInterval(cycle.current);
+    setHoverAgent("student");
+  }
+
+  // запуск системы: анимация расходится из самого логотипа
+  function launch() {
+    const r = logoRef.current?.getBoundingClientRect();
+    onEnter(r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null);
+  }
 
   return (
     <div className="landing">
@@ -24,13 +50,16 @@ export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
         <Mark agent="student" size={28} />
         <span className="name">Navi</span>
         <span className="sp" />
-        <button className="tgl" style={{ width: 42, height: 32 }} onClick={() => setLang(lang === "ru" ? "en" : "ru")}>
-          {lang === "ru" ? "EN" : "RU"}
-        </button>
-        <button className="tgl" style={{ width: 42, height: 32 }} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+        <LangMenu lang={lang} setLang={setLang} />
+        <button className="tgl tgl-sm" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          title={theme === "dark" ? "Light" : "Dark"}>
           {theme === "dark" ? UI.sun : UI.moon}
         </button>
-        <button className="btn btn-primary" onClick={onEnter}>{t.enter}</button>
+        <button ref={logoRef} className="logo-launch" data-agent={hoverAgent}
+          onMouseEnter={startCycle} onMouseLeave={stopCycle} onClick={launch}
+          title={t.enter} aria-label={t.enter}>
+          <Mark agent={hoverAgent} size={34} />
+        </button>
       </nav>
 
       <section className="hero-sec">
@@ -41,8 +70,8 @@ export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
           </h1>
           <p className="lead reveal" style={{ animationDelay: "120ms" }}>{t.heroSub}</p>
           <div className="hero-actions reveal" style={{ animationDelay: "180ms" }}>
-            <button className="btn btn-primary" onClick={onEnter}>{t.enter}</button>
-            <button className="btn btn-ghost" onClick={onEnter}>{t.tryFree}</button>
+            <button className="btn btn-primary" onClick={launch}>{t.enter}</button>
+            <button className="btn btn-ghost" onClick={launch}>{t.tryFree}</button>
           </div>
         </div>
       </section>
@@ -126,7 +155,7 @@ export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
           <div className="cta">
             <h2 className="h2">{t.ctaTitle}</h2>
             <p className="lead" style={{ margin: "0 auto 28px" }}>{t.ctaText}</p>
-            <button className="btn btn-primary" onClick={onEnter}>{t.enter}</button>
+            <button className="btn btn-primary" onClick={launch}>{t.enter}</button>
           </div>
         </div>
       </section>

@@ -1,5 +1,11 @@
 export const AGENTS = ["guest", "student", "teacher", "admin"];
 
+export const LANGS = [
+  { id: "ru", short: "RU", label: "Русский" },
+  { id: "en", short: "EN", label: "English" },
+  { id: "uz", short: "UZ", label: "O'zbekcha" },
+];
+
 export const T = {
   ru: {
     // общее
@@ -75,6 +81,78 @@ export const T = {
     bad: "Введите ID и верный код доступа",
     disclaimer: "Ответы носят справочно-рекомендательный характер и не являются официальным решением университета.",
     back: "На главную",
+  },
+  uz: {
+    brand: "Navi", tagline: "Universitet bo'ylab AI-navigator",
+    enter: "Navi'ni ochish", login: "Kirish", logout: "Chiqish", cancel: "Bekor qilish",
+    heroA: "Javob universitet hujjatlarida allaqachon bor.",
+    heroB: "Navi uni bir necha soniyada topadi.",
+    heroSub: "Uchta AI-agent — talaba, o'qituvchi va ma'muriyat uchun. Har biri faqat o'z roliga ochiq hujjatlar ichidan qidiradi va har bir javobda ma'lumot qaysi hujjatdan olinganini ko'rsatadi.",
+    tryFree: "Kirmasdan sinab ko'rish",
+    problemTitle: "Ma'lumot bor — uni topib bo'lmaydi",
+    problemText: "Sillabuslar, nizomlar, buyruqlar, topshiriqlar. Bitta faktni bilish uchun qaysi hujjatda ekanini bilish va uni to'liq o'qish kerak.",
+    stats: [
+      ["1,54 mln", "O'zbekiston oliygohlari talabalari"],
+      ["215", "oliygoh va filiallar"],
+      ["3", "turli kirish huquqiga ega rol"],
+    ],
+    agentsTitle: "Uchta agent — uchta kirish darajasi",
+    agentsLead: "Rol nafaqat javob ohangini, balki insonga qaysi hujjatlarni ko'rish mumkinligini ham belgilaydi.",
+    howTitle: "Javob qanday shakllanadi",
+    steps: [
+      ["So'rov", "Ovoz yoki matn orqali savol"],
+      ["Qidiruv", "Faqat shu agent hujjatlari bo'yicha"],
+      ["Kontekst", "Rol ko'rsatmasi va topilgan parchalar"],
+      ["Javob", "Manbalar va ovoz bilan"],
+    ],
+    safetyTitle: "Kirish huquqi ma'lumotlar darajasida ajratilgan",
+    safetyText: "Har bir agentning o'z hujjat indeksi bor. Rolga tegishli bo'lmagan hujjat uning natijalarida umuman yo'q — model hech qachon olmagan narsani aytib bera olmaydi. Server har bir hujjatga murojaatda kirish huquqini alohida tekshiradi.",
+    featuresTitle: "Imkoniyatlar",
+    features: [
+      ["Hujjatlar bo'yicha qidiruv", "Kerakli ma'lumotni topadi va har bir fakt qaysi hujjatdan olinganini ko'rsatadi"],
+      ["Qisqacha bayon", "Uzun nizom yoki topshiriqni mohiyatigacha qisqartiradi"],
+      ["Rol kutubxonasi", "Agentga ochiq hujjatlar — bir bosishda"],
+      ["Fayl yuklash", "Sizning faylingiz kutubxonaga qo'shiladi va qidiruvda qatnashadi"],
+      ["Ovoz", "Ovoz bilan so'rang va javobni tinglang"],
+      ["Murojaatlar", "Ruxsatdan tashqari savol dekanatga murojaat bo'lib ketadi"],
+    ],
+    ctaTitle: "Hoziroq sinab ko'ring",
+    ctaText: "Mehmon rejimi kirishsiz va ro'yxatdan o'tishsiz ishlaydi.",
+    footer: "Javoblar tavsiya xarakteriga ega va universitetning rasmiy qarori hisoblanmaydi.",
+    modeLabel: "Agent",
+    agents: { guest: "Mehmon", student: "Talaba", teacher: "O'qituvchi", admin: "Ma'mur" },
+    access: {
+      guest: "Faqat umumiy savollar. Universitetning ichki hujjatlari mavjud emas",
+      student: "Sillabuslar, topshiriqlar, talabalar uchun nizomlar",
+      teacher: "O'quv rejalari va kafedra uslubiy materiallari",
+      admin: "Ichki nizomlar, dekanat hujjat aylanishi",
+    },
+    accessTitle: "Ushbu agentga ochiq",
+    hero: {
+      guest: ["O'qish haqida", "so'rang"],
+      student: ["Nimani", "bilmoqchisiz?"],
+      teacher: ["Materiallarda", "nimani ko'ramiz?"],
+      admin: ["Hujjatlarda", "nimani topamiz?"],
+    },
+    placeholder: "Universitet hujjatlari haqida so'rang…",
+    placeholderGuest: "O'qish haqida umumiy savol bering…",
+    guestNote: ["Mehmon rejimi umumiy savollarga bepul javob beradi. Universitet hujjatlari ", "kirgandan", " keyin ochiladi."],
+    docs: "Kutubxona", docsEmpty: "Hujjatlarni ko'rish uchun kiring",
+    history: "Tarix", historyEmpty: "Hozircha suhbatlar yo'q",
+    sources: "Manbalar", answer: "Javob", thinking: "javob tayyorlanmoqda",
+    relevance: "mos kelishi",
+    fragment: "Hujjat parchasi", showFragment: "parchani ko'rsatish", hideFragment: "parchani yashirish",
+    attach: "Hujjat yuklash", uploaded: "Yuklangan hujjat", addedToLibrary: "kutubxonaga qo'shildi",
+    summarizeDoc: "Qisqacha bayon", listen: "Tinglash", stopListen: "To'xtatish",
+    record: "Ovoz bilan so'rash", recording: "Yozib olinmoqda — yuborish uchun bosing",
+    ticket: "Dekanatga murojaat yuborish", ticketSent: "Murojaat dekanatga yuborildi",
+    modalTitle: "Universitet tizimiga kirish",
+    modalLead: "Yagona hisob universitet tomonidan beriladi. Kirgandan so'ng uchala agent ham ochiq — har biri nimani ko'rishini uning o'z kirish darajasi belgilaydi.",
+    fieldId: "Universitet ID", fieldCode: "Kirish kodi", submit: "Kirish",
+    hint: "Demo kirish: istalgan universitet ID, kirish kodi — demo",
+    bad: "ID va to'g'ri kirish kodini kiriting",
+    disclaimer: "Javoblar tavsiya xarakteriga ega va universitetning rasmiy qarori hisoblanmaydi.",
+    back: "Bosh sahifa",
   },
   en: {
     brand: "Navi", tagline: "AI navigator for the university",
@@ -156,6 +234,12 @@ export const PROMPTS = {
     student: ["Когда сдавать курсовой проект по базам данных?", "Как подать апелляцию по результатам экзамена?", "Что нужно сделать в задании №5?"],
     teacher: ["Что в методических рекомендациях кафедры?", "Какие сроки проведения сессии?", "Кратко изложи учебный план курса"],
     admin: ["Сколько рассматривается заявление на академический отпуск?", "Как регистрируются входящие заявления студентов?", "Какие общие правила расписания сессии?"],
+  },
+  uz: {
+    guest: ["Sillabus nima va u nima uchun kerak?", "Imtihonlarga qanday samarali tayyorlanish mumkin?", "Akademik ta'til nima?"],
+    student: ["Ma'lumotlar bazasi bo'yicha kurs ishi qachon topshiriladi?", "Imtihon natijasiga qanday apellyatsiya beriladi?", "5-topshiriqda nima qilish kerak?"],
+    teacher: ["Kafedra uslubiy tavsiyalarida nima bor?", "Sessiya o'tkazish muddatlari qanday?", "Kurs o'quv rejasini qisqacha bayon qil"],
+    admin: ["Akademik ta'til arizasi qancha muddatda ko'riladi?", "Talabalarning kiruvchi arizalari qanday ro'yxatga olinadi?", "Sessiya jadvalining umumiy qoidalari qanday?"],
   },
   en: {
     guest: ["What is a syllabus and why does it matter?", "How can I prepare for exams effectively?", "What is academic leave?"],

@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 Role = Literal["guest", "student", "teacher", "admin"]
-Lang = Literal["ru", "en"]
+Lang = Literal["ru", "en", "uz"]
 
 
 class ChatMessage(BaseModel):

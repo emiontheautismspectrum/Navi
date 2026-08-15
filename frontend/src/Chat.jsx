@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, Fragment } from "react";
 import { Mark, ICONS, UI } from "./Brand.jsx";
 import { T, PROMPTS, AGENTS } from "./i18n.js";
 import * as api from "./api.js";
+import LangMenu from "./LangMenu.jsx";
 
 const DEMO_CODE = "demo";
 
@@ -299,7 +300,7 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
 
         <div className="side-foot">
           <div className="toggles">
-            <button className="tgl" onClick={() => setLang(lang === "ru" ? "en" : "ru")}>{lang === "ru" ? "EN" : "RU"}</button>
+            <LangMenu lang={lang} setLang={setLang} up />
             <button className="tgl" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? UI.sun : UI.moon}</button>
           </div>
           <button className="collapse" onClick={() => setRail((v) => !v)}>{UI.chevron}</button>
