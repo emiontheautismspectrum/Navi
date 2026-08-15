@@ -49,6 +49,7 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
   const [code, setCode] = useState("");
   const [bad, setBad] = useState(false);
   const [openSrc, setOpenSrc] = useState(null);
+  const [tab, setTab] = useState("lib");   // lib | hist
   const [playing, setPlaying] = useState(null);
   const [recording, setRecording] = useState(false);
 
@@ -298,34 +299,45 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
           {t.access[agent]}
         </div>
 
-        <div className="lib scrollcol on-panel">
-          <p className="side-label">{t.docs}{docs.length > 0 && ` · ${docs.length}`}</p>
-          {docs.length === 0
-            ? <p className="empty-note">{t.docsEmpty}</p>
-            : docs.map((d) => (
-                <button key={d.id} className="li" title={d.preview}
-                  onClick={() => summarizeDoc(d)} disabled={loading}>{d.title}</button>
-              ))}
-        </div>
+        {/* Библиотека и история — вкладки: открыта одна, ей достаётся
+            вся высота. Раньше два списка делили место и оба были обрезаны. */}
+        <div className="panel on-panel">
+          <div className="tabs" role="tablist">
+            <button role="tab" aria-selected={tab === "lib"}
+              className={`tab ${tab === "lib" ? "on" : ""}`} onClick={() => setTab("lib")}>
+              {t.docs}{docs.length > 0 && <em>{docs.length}</em>}
+            </button>
+            <button role="tab" aria-selected={tab === "hist"}
+              className={`tab ${tab === "hist" ? "on" : ""}`} onClick={() => setTab("hist")}>
+              {t.history}{turns.length > 0 && <em>{turns.length}</em>}
+            </button>
+          </div>
 
-        <div className="hist scrollcol on-panel">
-          <div className="hist-head">
-            <p className="side-label" style={{ margin: 0 }}>{t.history}</p>
-            {turns.length > 0 && (
-              <button className="clear-all" onClick={clearHistory} title={t.clearAll}>{t.clearAll}</button>
+          <div className="panel-body scrollcol">
+            {tab === "lib" ? (
+              docs.length === 0
+                ? <p className="empty-note">{t.docsEmpty}</p>
+                : docs.map((d) => (
+                    <button key={d.id} className="li" title={d.preview}
+                      onClick={() => summarizeDoc(d)} disabled={loading}>{d.title}</button>
+                  ))
+            ) : turns.length === 0 ? (
+              <p className="empty-note">{t.historyEmpty}</p>
+            ) : (
+              <>
+                {turns.map((x, i) => (
+                  <div className="hist-row" key={i}>
+                    <button className="li trunc" title={x.question}>{x.question}</button>
+                    <button className="del" onClick={() => removeTurn(i)} title={t.del} aria-label={t.del}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                  </div>
+                ))}
+                <button className="clear-all" onClick={clearHistory}>{t.clearAll}</button>
+              </>
             )}
           </div>
-          {turns.length === 0
-            ? <p className="empty-note">{t.historyEmpty}</p>
-            : turns.map((x, i) => (
-                <div className="hist-row" key={i}>
-                  <button className="li trunc" title={x.question}>{x.question}</button>
-                  <button className="del" onClick={() => removeTurn(i)} title={t.del} aria-label={t.del}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-                  </button>
-                </div>
-              ))}
         </div>
 
         <div className="side-foot">
