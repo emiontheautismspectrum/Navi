@@ -50,6 +50,9 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
   const [bad, setBad] = useState(false);
   const [openSrc, setOpenSrc] = useState(null);
   const [tab, setTab] = useState("lib");   // lib | hist
+  const [dragging, setDragging] = useState(false);
+  const [freshDoc, setFreshDoc] = useState(null);   // подсветка нового документа
+  const dragDepth = useRef(0);
   const [playing, setPlaying] = useState(null);
   const [recording, setRecording] = useState(false);
 
@@ -152,28 +155,67 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
   }
 
   // Загруженный документ и суммаризируется, и остаётся в библиотеке роли
-  async function onFile(e) {
-    const file = e.target.files && e.target.files[0];
-    e.target.value = "";
+  // Читаются только текстовые форматы. PDF и DOCX прочитались бы как
+  // двоичный мусор и попали в индекс — поэтому отсекаем сразу.
+  const TEXT_EXT = [".txt", ".md", ".csv", ".markdown", ".log"];
+
+  async function handleFile(file) {
     if (!file || loading) return;
     if (isGuest) { setModal(true); return; }
+
+    const name = file.name.toLowerCase();
+    const okType = TEXT_EXT.some((e) => name.endsWith(e)) || file.type.startsWith("text/");
+    if (!okType) {
+      push({ question: `${t.uploaded}: ${file.name}`, answer: null, sources: [], error: t.badFormat });
+      return;
+    }
 
     const text = await file.text();
     push({ question: `${t.uploaded}: ${file.name}`, answer: null, sources: [], error: null });
     setLoading(true);
     try {
-      const [sum] = await Promise.all([
+      const [sum, doc] = await Promise.all([
         api.summarizeText(agent, text, lang),
         api.uploadDocument(agent, file.name.replace(/\.[^.]+$/, ""), text, account?.id || "")
           .catch(() => null),
       ]);
       patchLast({ answer: sum.summary, note: t.addedToLibrary });
+      if (doc?.id) {
+        setFreshDoc(doc.id);
+        setTab("lib");
+        setTimeout(() => setFreshDoc(null), 4000);
+      }
       api.listDocuments(agent).then(setDocs).catch(() => {});
     } catch (err) {
       patchLast({ error: err.message });
     } finally {
       setLoading(false);
     }
+  }
+
+  function onFile(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    handleFile(file);
+  }
+
+  // Счётчик нужен из-за всплытия dragleave от вложенных элементов:
+  // без него подсветка мигает при движении курсора внутри окна.
+  function onDragEnter(e) {
+    e.preventDefault();
+    dragDepth.current += 1;
+    if (e.dataTransfer?.types?.includes("Files")) setDragging(true);
+  }
+  function onDragLeave(e) {
+    e.preventDefault();
+    dragDepth.current -= 1;
+    if (dragDepth.current <= 0) { dragDepth.current = 0; setDragging(false); }
+  }
+  function onDrop(e) {
+    e.preventDefault();
+    dragDepth.current = 0;
+    setDragging(false);
+    handleFile(e.dataTransfer?.files?.[0]);
   }
 
   async function summarizeDoc(doc) {
@@ -258,7 +300,7 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
           disabled={loading} title={recording ? t.recording : t.record}>{UI.mic}</button>
         <button className="icon-btn" onClick={() => fileRef.current?.click()}
           disabled={loading} title={t.attach}>{UI.clip}</button>
-        <input ref={fileRef} type="file" accept=".txt,.md" style={{ display: "none" }} onChange={onFile} />
+        <input ref={fileRef} type="file" accept=".txt,.md,.csv,.markdown,.log,text/*" style={{ display: "none" }} onChange={onFile} />
         <button className="send" onClick={() => send()} disabled={loading || !input.trim()}>{UI.send}</button>
       </div>
     </div>
@@ -318,7 +360,7 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
               docs.length === 0
                 ? <p className="empty-note">{t.docsEmpty}</p>
                 : docs.map((d) => (
-                    <button key={d.id} className="li" title={d.preview}
+                    <button key={d.id} className={`li ${freshDoc === d.id ? "fresh" : ""}`} title={d.preview}
                       onClick={() => summarizeDoc(d)} disabled={loading}>{d.title}</button>
                   ))
             ) : turns.length === 0 ? (
@@ -349,7 +391,20 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
         </div>
       </aside>
 
-      <div className="main">
+      <div className="main"
+        onDragEnter={onDragEnter} onDragOver={(e) => e.preventDefault()}
+        onDragLeave={onDragLeave} onDrop={onDrop}>
+        {dragging && (
+          <div className="dropzone">
+            <div className="dropzone-inner">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" />
+              </svg>
+              <p>{isGuest ? t.guestUpload : t.dropHere}</p>
+            </div>
+          </div>
+        )}
         <div className="topbar">
           <span className="pill"><i />{t.agents[agent]}</span>
           <span className="sp" />
