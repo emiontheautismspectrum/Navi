@@ -90,6 +90,20 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
   function push(turn) {
     setByAgent((p) => ({ ...p, [agent]: [...(p[agent] || []), turn] }));
   }
+  // Удаление одной записи. Индексы после удаления сдвигаются, поэтому
+  // сбрасываем раскрытый фрагмент — иначе откроется чужой источник.
+  function removeTurn(idx) {
+    setOpenSrc(null);
+    setByAgent((p) => ({ ...p, [agent]: (p[agent] || []).filter((_, i) => i !== idx) }));
+  }
+
+  function clearHistory() {
+    if (!(byAgent[agent] || []).length) return;
+    if (!window.confirm(t.confirmClear)) return;
+    setOpenSrc(null);
+    setByAgent((p) => ({ ...p, [agent]: [] }));
+  }
+
   function patchLast(patch) {
     setByAgent((p) => {
       const list = [...(p[agent] || [])];
@@ -295,10 +309,23 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
         </div>
 
         <div className="hist scrollcol on-panel">
-          <p className="side-label">{t.history}</p>
+          <div className="hist-head">
+            <p className="side-label" style={{ margin: 0 }}>{t.history}</p>
+            {turns.length > 0 && (
+              <button className="clear-all" onClick={clearHistory} title={t.clearAll}>{t.clearAll}</button>
+            )}
+          </div>
           {turns.length === 0
             ? <p className="empty-note">{t.historyEmpty}</p>
-            : turns.map((x, i) => <button key={i} className="li trunc" title={x.question}>{x.question}</button>)}
+            : turns.map((x, i) => (
+                <div className="hist-row" key={i}>
+                  <button className="li trunc" title={x.question}>{x.question}</button>
+                  <button className="del" onClick={() => removeTurn(i)} title={t.del} aria-label={t.del}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                  </button>
+                </div>
+              ))}
         </div>
 
         <div className="side-foot">

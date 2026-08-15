@@ -319,3 +319,23 @@ section{padding:60px 0}
   100%{transform:scale(1);opacity:0}
 }
 @media(prefers-reduced-motion:reduce){.burst{display:none}.logo-launch:hover{animation:none}}
+
+/* ─── История: удаление ─── */
+.hist-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 6px;margin-bottom:9px}
+.clear-all{background:transparent;border:none;padding:0;cursor:pointer;color:var(--text-faint);
+  font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;transition:color .18s}
+.clear-all:hover{color:#F0A860}
+[data-theme="light"] .clear-all:hover{color:#A85A10}
+.clear-all:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.hist-row{display:flex;align-items:center;gap:2px}
+.hist-row .li{flex:1;min-width:0}
+/* Крестик появляется при наведении на строку, чтобы список
+   не выглядел перегруженным. На тач-устройствах — всегда виден. */
+.hist-row .del{flex:none;width:22px;height:22px;display:grid;place-items:center;border:none;border-radius:6px;
+  background:transparent;color:var(--text-faint);cursor:pointer;opacity:0;transition:opacity .16s,color .16s,background .16s}
+.hist-row:hover .del,.hist-row .del:focus-visible{opacity:1}
+.hist-row .del:hover{color:#F0A860;background:color-mix(in srgb,#F0A860 12%,transparent)}
+[data-theme="light"] .hist-row .del:hover{color:#A85A10;background:color-mix(in srgb,#A85A10 10%,transparent)}
+.hist-row .del:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+@media(hover:none){.hist-row .del{opacity:.65}}
