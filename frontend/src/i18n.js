@@ -6,8 +6,9 @@ export const T = {
     brand: "Navi", tagline: "AI-навигатор по университету",
     enter: "Открыть Navi", login: "Войти", logout: "Выйти", cancel: "Отмена",
     // лендинг
-    heroLead: "Один вход. Три агента. Каждый видит только то, что положено его роли.",
-    heroSub: "Студенты, преподаватели и администрация университета перестают искать информацию вручную: Navi находит её в документах вуза и отвечает со ссылкой на источник.",
+    heroA: "Ответ уже есть в документах вуза.",
+    heroB: "Navi достаёт его за секунды.",
+    heroSub: "Три AI-агента — для студента, преподавателя и администрации. Каждый ищет только в тех документах, которые открыты его роли, и в каждом ответе показывает, откуда взят факт.",
     tryFree: "Попробовать без входа",
     problemTitle: "Информация есть — найти её нельзя",
     problemText: "Силлабусы, регламенты, приказы, задания. Чтобы получить один факт, нужно знать, в каком документе искать, и прочитать его целиком.",
@@ -78,8 +79,9 @@ export const T = {
   en: {
     brand: "Navi", tagline: "AI navigator for the university",
     enter: "Open Navi", login: "Sign in", logout: "Sign out", cancel: "Cancel",
-    heroLead: "One sign-in. Three agents. Each sees only what its role allows.",
-    heroSub: "Students, faculty and administrators stop digging through files: Navi finds the answer in university documents and shows the source it came from.",
+    heroA: "The answer is already in the university's documents.",
+    heroB: "Navi retrieves it in seconds.",
+    heroSub: "Three AI agents — for students, faculty and administrators. Each searches only the documents its role may open, and every answer shows exactly where the fact came from.",
     tryFree: "Try without signing in",
     problemTitle: "The information exists — finding it does not",
     problemText: "Syllabi, regulations, orders, assignments. To get one fact you must know which document holds it, then read the whole thing.",

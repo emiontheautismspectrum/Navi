@@ -36,8 +36,8 @@ export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
       <section className="hero-sec">
         <div className="wrap">
           <p className="eyebrow reveal">{t.tagline}</p>
-          <h1 className="h1 reveal" style={{ animationDelay: "60ms", marginTop: 18 }}>
-            {t.heroLead.split(".")[0]}. <b>{t.heroLead.split(".").slice(1).join(".").trim()}</b>
+          <h1 className="h1 reveal" style={{ animationDelay: "60ms", marginTop: 16 }}>
+            {t.heroA} <b>{t.heroB}</b>
           </h1>
           <p className="lead reveal" style={{ animationDelay: "120ms" }}>{t.heroSub}</p>
           <div className="hero-actions reveal" style={{ animationDelay: "180ms" }}>
