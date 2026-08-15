@@ -309,10 +309,10 @@ const T = {
     summaryOf:"Краткое изложение", docs:"Документы", docsEmpty:"Войдите, чтобы увидеть документы вуза",
     summarizeDoc:"Краткое изложение документа",
     modalTitle:"Вход в систему университета",
-    modalLead:"Учётная запись выдаётся университетом. Роль определяется учётной записью — выбрать её вручную нельзя.",
+    modalLead:"Единая учётная запись выдаётся университетом. После входа доступны все три агента — какие документы видит каждый, определяет его собственный уровень доступа.",
     fieldId:"Университетский ID", fieldCode:"Код доступа", submit:"Войти", cancel:"Отмена",
-    hint:"Демо-доступ: ID — student01, teacher01 или admin01. Код доступа — demo",
-    bad:"Неверный ID или код доступа",
+    hint:"Демо-доступ: любой университетский ID, код доступа — demo",
+    bad:"Введите ID и верный код доступа",
   },
   en: {
     tagline:"AI navigator", modeLabel:"Mode",
@@ -338,10 +338,10 @@ const T = {
     summaryOf:"Summary", docs:"Documents", docsEmpty:"Sign in to see university documents",
     summarizeDoc:"Document summary",
     modalTitle:"University sign-in",
-    modalLead:"Accounts are issued by the university. Your role comes from the account — it cannot be chosen manually.",
+    modalLead:"A single account is issued by the university. After signing in all three agents are available — what each of them can see is defined by its own access level.",
     fieldId:"University ID", fieldCode:"Access code", submit:"Sign in", cancel:"Cancel",
-    hint:"Demo access: ID — student01, teacher01 or admin01. Access code — demo",
-    bad:"Invalid ID or access code",
+    hint:"Demo access: any university ID, access code — demo",
+    bad:"Enter an ID and a valid access code",
   },
 };
 
@@ -360,9 +360,10 @@ const PROMPTS = {
   },
 };
 
-// Демо-учётные записи. В продакшене роль приходит из SSO университета
-// в подписанном токене и на клиенте не проверяется.
-const ACCOUNTS = { student01:"student", teacher01:"teacher", admin01:"admin" };
+// Единая университетская учётная запись. Вход открывает доступ к
+// внутренним документам вуза; какие именно документы видны — решает
+// выбранный агент, у каждого свой изолированный индекс.
+// В продакшене это SSO университета, проверка на сервере.
 const DEMO_CODE = "demo";
 const ORDER = ["guest","student","teacher","admin"];
 
@@ -438,10 +439,10 @@ function App(){
   }, [turns.length, loading]);
 
   function doLogin(){
-    const r = ACCOUNTS[uid.trim().toLowerCase()];
-    if (r && code.trim().toLowerCase() === DEMO_CODE){
-      setAccount({ id: uid.trim().toLowerCase(), role: r });
-      setRole(r);
+    const id = uid.trim();
+    if (id && code.trim().toLowerCase() === DEMO_CODE){
+      setAccount({ id });
+      setRole("student");   // после входа открываются все три агента
       setModal(false);
       setUid(""); setCode(""); setBad(false);
     } else {
@@ -452,7 +453,7 @@ function App(){
   function logout(){ setAccount(null); setRole("guest"); }
 
   function pickRole(id){
-    const locked = id !== "guest" && (!account || account.role !== id);
+    const locked = id !== "guest" && !account;
     if (locked){ setModal(true); return; }
     setRole(id);
     if (narrow) setRail(true);
@@ -596,7 +597,7 @@ function App(){
         <p className="side-label hide-on-rail reveal" style={{ animationDelay:"70ms" }}>{t.modeLabel}</p>
         <div className="roles reveal" style={{ animationDelay:"110ms" }}>
           {ORDER.map((id) => {
-            const locked = id !== "guest" && (!account || account.role !== id);
+            const locked = id !== "guest" && !account;
             return (
               <button key={id}
                 className={`role ${role === id ? "on" : ""} ${locked ? "locked" : ""}`}
