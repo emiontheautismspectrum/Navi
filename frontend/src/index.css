@@ -366,3 +366,6 @@ section{padding:60px 0}
 .li.fresh{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--text);
   animation:freshPulse 2.4s ease-in-out 2}
 @keyframes freshPulse{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 14px color-mix(in srgb,var(--accent) 35%,transparent)}}
+.mini.warn{border-color:color-mix(in srgb,#F0A860 45%,transparent);color:#F0A860;text-transform:none;
+  letter-spacing:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
+[data-theme="light"] .mini.warn{border-color:color-mix(in srgb,#A85A10 45%,transparent);color:#A85A10}

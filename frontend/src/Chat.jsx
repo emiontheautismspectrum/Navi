@@ -223,22 +223,34 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
 
     push({ question: `${t.uploaded}: ${file.name}`, answer: null, sources: [], error: null });
     setLoading(true);
-    try {
-      const [sum, doc] = await Promise.all([
-        api.summarizeText(agent, text, lang),
-        api.uploadDocument(agent, title, text, account?.id || "", clientId)
-          .catch(() => null),
-      ]);
-      if (doc && text.length <= MAX_DOC_CHARS) {
+    // Суммаризация и добавление в библиотеку — независимые операции.
+    // Раньше ошибка загрузки глушилась, и система всё равно писала
+    // «добавлен в библиотеку», хотя документа там не было.
+    let uploadErr = null;
+    const doc = await api
+      .uploadDocument(agent, title, text, account?.id || "", clientId)
+      .catch((e) => { uploadErr = e; return null; });
+
+    if (doc?.id) {
+      if (text.length <= MAX_DOC_CHARS) {
         saveLocalDoc(account?.id, { client_id: clientId, role: agent, title, content: text });
       }
-      patchLast({ answer: sum.summary, note: t.addedToLibrary });
-      if (doc?.id) {
-        setFreshDoc(doc.id);
-        setTab("lib");
-        setTimeout(() => setFreshDoc(null), 4000);
-      }
-      api.listDocuments(agent).then(setDocs).catch(() => {});
+      // список обновляем сразу, не дожидаясь суммаризации
+      try {
+        setDocs(await api.listDocuments(agent));
+      } catch { /* список обновится при следующем переключении агента */ }
+      setFreshDoc(doc.id);
+      setTab("lib");
+      setTimeout(() => setFreshDoc(null), 4000);
+    }
+
+    try {
+      const sum = await api.summarizeText(agent, text, lang);
+      patchLast({
+        answer: sum.summary,
+        note: doc?.id ? t.addedToLibrary : null,
+        warn: uploadErr ? `${t.notAdded}: ${uploadErr.message}` : null,
+      });
     } catch (err) {
       patchLast({ error: err.message });
     } finally {
@@ -529,6 +541,9 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
                           </button>
                           {x.note && x.note !== t.ticketSent && (
                             <span className="mini" style={{ borderColor: "transparent", color: "var(--accent)" }}>{x.note}</span>
+                          )}
+                          {x.warn && (
+                            <span className="mini warn" title={x.warn}>{x.warn}</span>
                           )}
                         </div>
                       </>
