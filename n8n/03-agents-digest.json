@@ -1,0 +1,81 @@
+{
+  "name": "Navi · Утренний дайджест ролевых агентов",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * 1-5" }]
+        }
+      },
+      "id": "c3000000-0000-4000-8000-000000000001",
+      "name": "Будни в 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-340, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Каждому агенту — свой вопрос. Один и тот же запрос дал бы\n// одинаковые ответы, а смысл в том, что роли нужны разные сводки.\nreturn [\n  { json: { role: 'student', question: 'Какие сроки и дедлайны действуют на этой неделе? Ответь списком.' } },\n  { json: { role: 'teacher', question: 'Что важного в организационных материалах кафедры? Ответь списком.' } },\n  { json: { role: 'admin',   question: 'Какие сроки рассмотрения заявлений действуют? Ответь списком.' } },\n];"
+      },
+      "id": "c3000000-0000-4000-8000-000000000002",
+      "name": "Вопрос под каждую роль",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NAVI_API_URL }}/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ role: $json.role, message: $json.question, lang: 'ru' }) }}",
+        "options": { "timeout": 60000 }
+      },
+      "id": "c3000000-0000-4000-8000-000000000003",
+      "name": "Спросить агента Navi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Собираем один дайджест из трёх ответов.\n// Источники показываем явно — это принцип Navi: видно, откуда факт.\nconst ROLE_RU = { student: 'Студентам', teacher: 'Преподавателям', admin: 'Администрации' };\nconst items = $input.all();\n\nconst blocks = items.map((i, idx) => {\n  const answer = i.json.reply || '—';\n  const srcs = (i.json.sources || []).map((s) => '· ' + s.title).join('\\n');\n  const role = $('Вопрос под каждую роль').all()[idx]?.json?.role || '';\n  return [\n    '*' + (ROLE_RU[role] || role) + '*',\n    answer,\n    srcs ? '\\n_Источники:_\\n' + srcs : '',\n  ].join('\\n');\n});\n\nconst text = ['📅 *Дайджест Navi на сегодня*', '', blocks.join('\\n\\n———\\n\\n')].join('\\n');\nreturn [{ json: { text } }];"
+      },
+      "id": "c3000000-0000-4000-8000-000000000004",
+      "name": "Собрать дайджест",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [360, 300],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.NAVI_TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "c3000000-0000-4000-8000-000000000005",
+      "name": "Разослать в Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [600, 300]
+    }
+  ],
+  "connections": {
+    "Будни в 08:00": {
+      "main": [[{ "node": "Вопрос под каждую роль", "type": "main", "index": 0 }]]
+    },
+    "Вопрос под каждую роль": {
+      "main": [[{ "node": "Спросить агента Navi", "type": "main", "index": 0 }]]
+    },
+    "Спросить агента Navi": {
+      "main": [[{ "node": "Собрать дайджест", "type": "main", "index": 0 }]]
+    },
+    "Собрать дайджест": {
+      "main": [[{ "node": "Разослать в Telegram", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

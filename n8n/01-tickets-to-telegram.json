@@ -1,0 +1,53 @@
+{
+  "name": "Navi · Заявки в деканат",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "navi-ticket",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Событие из Navi",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-260, 300],
+      "webhookId": "a1000000-0000-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Событие приходит из бэкенда Navi: POST /ticket\n// { event: 'ticket.created', data: { role, question, contact, user } }\nconst body = $input.first().json.body ?? $input.first().json;\nconst d = body.data ?? {};\n\nconst ROLE_RU = {\n  guest: 'Гость',\n  student: 'Студент',\n  teacher: 'Преподаватель',\n  admin: 'Администратор',\n};\n\n// Куда направить заявку — зависит от роли автора\nconst ROUTE = {\n  student: 'Учебный отдел',\n  teacher: 'Кафедра',\n  admin: 'Канцелярия',\n  guest: 'Приёмная комиссия',\n};\n\nconst role = d.role || 'guest';\nconst ticketId = 'T-' + Date.now().toString(36).toUpperCase();\n\nconst text = [\n  '🎓 *Новая заявка через Navi*',\n  '',\n  '*Номер:* `' + ticketId + '`',\n  '*Роль:* ' + (ROLE_RU[role] || role),\n  '*Адресат:* ' + (ROUTE[role] || '—'),\n  '*Пользователь:* ' + (d.user || 'не указан'),\n  '',\n  '*Вопрос:*',\n  d.question || '—',\n].join('\\n');\n\nreturn [{ json: { ticketId, role, route: ROUTE[role] || '', text, raw: d } }];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Сформировать заявку",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-40, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.NAVI_TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Отправить в Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [200, 300]
+    }
+  ],
+  "connections": {
+    "Событие из Navi": {
+      "main": [[{ "node": "Сформировать заявку", "type": "main", "index": 0 }]]
+    },
+    "Сформировать заявку": {
+      "main": [[{ "node": "Отправить в Telegram", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

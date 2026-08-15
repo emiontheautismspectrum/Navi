@@ -1,0 +1,91 @@
+{
+  "name": "Navi · Синхронизация библиотеки документов",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 6 * * *" }]
+        }
+      },
+      "id": "b2000000-0000-4000-8000-000000000001",
+      "name": "Каждый день в 06:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-320, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NAVI_DOCS_SOURCE_URL }}",
+        "options": {}
+      },
+      "id": "b2000000-0000-4000-8000-000000000002",
+      "name": "Забрать документы вуза",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-100, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Источник должен отдавать массив вида:\n// [{ title, content, role }]  role: student | teacher | admin\n// Здесь же отсекаем пустые и слишком короткие документы,\n// чтобы не засорять индекс поиска.\nconst items = $input.all().flatMap((i) => {\n  const v = i.json;\n  return Array.isArray(v) ? v : (Array.isArray(v.documents) ? v.documents : [v]);\n});\n\nconst clean = items\n  .filter((d) => d && d.title && d.content && String(d.content).trim().length > 120)\n  .map((d) => ({\n    json: {\n      title: String(d.title).slice(0, 200),\n      content: String(d.content).slice(0, 40000),\n      role: ['student', 'teacher', 'admin'].includes(d.role) ? d.role : 'student',\n    },\n  }));\n\nif (clean.length === 0) {\n  return [{ json: { skipped: true, reason: 'нет подходящих документов' } }];\n}\nreturn clean;"
+      },
+      "id": "b2000000-0000-4000-8000-000000000003",
+      "name": "Проверить и подготовить",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [120, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.skipped }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2000000-0000-4000-8000-000000000004",
+      "name": "Есть что загружать?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [340, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NAVI_API_URL }}/documents/upload",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ role: $json.role, title: $json.title, content: $json.content, uploaded_by: 'n8n-sync' }) }}",
+        "options": {}
+      },
+      "id": "b2000000-0000-4000-8000-000000000005",
+      "name": "Загрузить в библиотеку Navi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [580, 220]
+    }
+  ],
+  "connections": {
+    "Каждый день в 06:00": {
+      "main": [[{ "node": "Забрать документы вуза", "type": "main", "index": 0 }]]
+    },
+    "Забрать документы вуза": {
+      "main": [[{ "node": "Проверить и подготовить", "type": "main", "index": 0 }]]
+    },
+    "Проверить и подготовить": {
+      "main": [[{ "node": "Есть что загружать?", "type": "main", "index": 0 }]]
+    },
+    "Есть что загружать?": {
+      "main": [[{ "node": "Загрузить в библиотеку Navi", "type": "main", "index": 0 }], []]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

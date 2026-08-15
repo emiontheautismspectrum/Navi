@@ -373,11 +373,9 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
                             {playing === i ? UI.stop : UI.sound}
                             {playing === i ? t.stopListen : t.listen}
                           </button>
-                          {!isGuest && (
-                            <button className="mini" onClick={() => sendTicket(x.question)} disabled={x.note === t.ticketSent}>
-                              {UI.ticket}{x.note === t.ticketSent ? t.ticketSent : t.ticket}
-                            </button>
-                          )}
+                          <button className="mini" onClick={() => sendTicket(x.question)} disabled={x.note === t.ticketSent}>
+                            {UI.ticket}{x.note === t.ticketSent ? t.ticketSent : t.ticket}
+                          </button>
                           {x.note && x.note !== t.ticketSent && (
                             <span className="mini" style={{ borderColor: "transparent", color: "var(--accent)" }}>{x.note}</span>
                           )}
