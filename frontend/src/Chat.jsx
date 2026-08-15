@@ -4,6 +4,9 @@ import { T, PROMPTS, AGENTS } from "./i18n.js";
 import * as api from "./api.js";
 import LangMenu from "./LangMenu.jsx";
 
+// Демо-учётная запись. В продакшене проверка уходит на сторону
+// SSO университета, здесь она нужна только чтобы показать сценарий.
+const DEMO_ID = "idnavi";
 const DEMO_CODE = "demo";
 
 /** История хранится отдельно для каждого университетского ID:
@@ -96,7 +99,7 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
   }
 
   function login() {
-    if (uid.trim() && code.trim().toLowerCase() === DEMO_CODE) {
+    if (uid.trim().toLowerCase() === DEMO_ID && code.trim().toLowerCase() === DEMO_CODE) {
       setAccount({ id: uid.trim() });
       setAgent("student");
       setModal(false);

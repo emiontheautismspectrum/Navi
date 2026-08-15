@@ -13,6 +13,13 @@ global.document = { documentElement: {}, body: {} };
 global.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
 
 const noop = () => {};
+
+// useLayoutEffect не работает при серверном рендере — в реальности
+// приложение рендерится только в браузере, поэтому это шум харнесса,
+// а не ошибка. Глушим, чтобы не маскировать настоящие проблемы.
+const warn = console.error;
+console.error = (...a) =>
+  String(a[0]).includes("useLayoutEffect does nothing on the server") ? undefined : warn(...a);
 let fails = 0;
 
 for (const lang of ["ru", "en", "uz"]) {

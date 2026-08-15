@@ -287,11 +287,12 @@ section{padding:60px 0}
 .nav .tgl{flex:0 0 auto}
 
 /* ─── Меню выбора языка ─── */
-.langbox{position:relative;flex:0 0 auto}
-.langmenu{position:absolute;top:calc(100% + 6px);right:0;z-index:50;margin:0;padding:5px;list-style:none;
+/* Меню языка живёт в координатах окна: сайдбар обрезает всё, что
+   выходит за его края (overflow:hidden), и абсолютное меню внутри
+   него показывалось обрубком. */
+.langmenu{position:fixed;z-index:120;margin:0;padding:5px;list-style:none;
   min-width:158px;background:var(--deep);border:1px solid var(--rule);border-radius:var(--r-md);
-  box-shadow:0 14px 40px rgba(0,0,0,.35);animation:rise .2s var(--ease) both}
-.langmenu.up{top:auto;bottom:calc(100% + 6px)}
+  box-shadow:0 14px 40px rgba(0,0,0,.4);animation:rise .18s var(--ease) both}
 .langmenu li{margin:0}
 .langmenu button{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:none;
   color:var(--text-dim);font-family:var(--font-body);font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer;text-align:left;transition:all .16s}
