@@ -269,3 +269,137 @@ body {
   font-size: 10px;
   font-weight: 600;
 }
+
+/* Строка доступа роли — делает разграничение видимым до первого вопроса */
+.role-access {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--chalk-green);
+}
+
+/* Пустой экран: приглашение к действию, а не просто подпись */
+.empty-state {
+  margin: auto;
+  max-width: 460px;
+  text-align: center;
+}
+
+.empty-state__lead {
+  margin: 0 0 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a917a;
+}
+
+.prompt-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prompt-chip {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.4;
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.prompt-chip:hover:not(:disabled) {
+  border-color: var(--brass);
+  background: #fffaf2;
+}
+
+.prompt-chip:focus-visible {
+  outline: 2px solid var(--brass-dim);
+  outline-offset: 2px;
+}
+
+.prompt-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Мобильная адаптация — жюри может открыть ссылку с телефона */
+@media (max-width: 640px) {
+  .app {
+    border-left: none;
+    border-right: none;
+  }
+
+  .header {
+    padding: 16px 16px 12px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    line-height: 1.25;
+  }
+
+  .role-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .role-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .role-tab {
+    padding: 10px 12px;
+    white-space: nowrap;
+  }
+
+  .disclaimer {
+    font-size: 10px;
+  }
+
+  .messages {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .msg {
+    max-width: 92%;
+    font-size: 14px;
+  }
+
+  .composer {
+    padding: 12px 16px 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .composer textarea {
+    flex: 1 1 100%;
+    order: 1;
+  }
+
+  .composer button {
+    order: 2;
+    padding: 10px 14px;
+  }
+
+  .empty-state {
+    max-width: 100%;
+  }
+}
+
+/* Уважаем системную настройку «уменьшить движение» */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

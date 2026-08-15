@@ -7,10 +7,33 @@ const ROLES = [
   { id: "admin", label: "Админ. сотрудник" },
 ];
 
-const ROLE_HINTS = {
-  student: "Спросите про задание, срок сдачи или попросите объяснить тему",
-  teacher: "Спросите про учебный план, регламент или попросите суммаризацию",
-  admin: "Спросите про регламент, процедуру или срок рассмотрения заявления",
+// Что именно доступно роли — показываем до первого вопроса.
+// Разграничение доступа это суть системы, поэтому оно должно быть
+// видно в интерфейсе, а не только проявляться в ответах.
+const ROLE_ACCESS = {
+  student: "Доступ: силлабусы, задания, регламенты для студентов",
+  teacher: "Доступ: учебные планы, методические материалы кафедры",
+  admin: "Доступ: внутренние регламенты, документооборот деканата",
+};
+
+// Готовые вопросы: человек, открывший ссылку впервые, может начать
+// в один клик, не придумывая формулировку.
+const ROLE_PROMPTS = {
+  student: [
+    "Когда сдавать курсовой проект по базам данных?",
+    "Как подать апелляцию по результатам экзамена?",
+    "Что нужно сделать в задании №5?",
+  ],
+  teacher: [
+    "Что в методических рекомендациях кафедры?",
+    "Какие сроки проведения сессии?",
+    "Кратко изложи учебный план курса",
+  ],
+  admin: [
+    "Сколько рассматривается заявление на академический отпуск?",
+    "Как регистрируются входящие заявления студентов?",
+    "Какие общие правила расписания сессии?",
+  ],
 };
 
 export default function App() {
@@ -35,8 +58,8 @@ export default function App() {
     }));
   }
 
-  async function handleSend() {
-    const text = input.trim();
+  async function handleSend(presetText) {
+    const text = (presetText ?? input).trim();
     if (!text || loading) return;
 
     const userMsg = { role: "user", content: text };
@@ -109,6 +132,7 @@ export default function App() {
             </button>
           ))}
         </nav>
+        <p className="role-access">{ROLE_ACCESS[role]}</p>
         <p className="disclaimer">
           Ответы агента носят справочно-рекомендательный характер и не
           являются официальным решением, приказом или позицией
@@ -119,7 +143,21 @@ export default function App() {
 
       <main className="messages">
         {messages.length === 0 && (
-          <div className="empty-state">{ROLE_HINTS[role]}</div>
+          <div className="empty-state">
+            <p className="empty-state__lead">С чего начать</p>
+            <div className="prompt-chips">
+              {ROLE_PROMPTS[role].map((q) => (
+                <button
+                  key={q}
+                  className="prompt-chip"
+                  onClick={() => handleSend(q)}
+                  disabled={loading}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
@@ -161,7 +199,7 @@ export default function App() {
           placeholder="Напишите сообщение агенту…"
           rows={1}
         />
-        <button onClick={handleSend} disabled={loading || !input.trim()}>
+        <button onClick={() => handleSend()} disabled={loading || !input.trim()}>
           Отправить
         </button>
       </div>

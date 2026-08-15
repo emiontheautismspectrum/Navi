@@ -62,6 +62,29 @@ body { margin: 0; background: var(--parchment); color: var(--ink); font-family: 
 .disclaimer::before { content: "!"; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
   width: 14px; height: 14px; margin-top: 1px; border-radius: 50%; background: var(--brass); color: var(--parchment);
   font-size: 10px; font-weight: 600; }
+.role-access { margin: 10px 0 0; font-family: var(--font-mono); font-size: 11px; letter-spacing: .02em; color: var(--chalk-green); }
+.empty-state { margin: auto; max-width: 460px; text-align: center; }
+.empty-state__lead { margin: 0 0 14px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #9a917a; }
+.prompt-chips { display: flex; flex-direction: column; gap: 8px; }
+.prompt-chip { font-family: var(--font-body); font-size: 13.5px; line-height: 1.4; text-align: left; padding: 10px 14px; background: var(--card); color: var(--ink); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.prompt-chip:hover:not(:disabled) { border-color: var(--brass); background: #fffaf2; }
+.prompt-chip:focus-visible { outline: 2px solid var(--brass-dim); outline-offset: 2px; }
+.prompt-chip:disabled { opacity: .5; cursor: default; }
+@media (max-width: 640px) {
+  .app { border-left: none; border-right: none; }
+  .header { padding: 16px 16px 12px; }
+  .header h1 { font-size: 20px; line-height: 1.25; }
+  .role-tabs { overflow-x: auto; scrollbar-width: none; }
+  .role-tabs::-webkit-scrollbar { display: none; }
+  .role-tab { padding: 10px 12px; white-space: nowrap; }
+  .messages { padding: 16px; gap: 14px; }
+  .msg { max-width: 92%; font-size: 14px; }
+  .composer { padding: 12px 16px 16px; gap: 8px; flex-wrap: wrap; }
+  .composer textarea { flex: 1 1 100%; order: 1; }
+  .composer button { order: 2; padding: 10px 14px; }
+  .empty-state { max-width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
@@ -80,10 +103,28 @@ const ROLES = [
   { id: "teacher", label: "Преподаватель" },
   { id: "admin", label: "Админ. сотрудник" },
 ];
-const ROLE_HINTS = {
-  student: "Спросите про задание, срок сдачи или попросите объяснить тему",
-  teacher: "Спросите про учебный план, регламент или попросите суммаризацию",
-  admin: "Спросите про регламент, процедуру или срок рассмотрения заявления",
+const ROLE_ACCESS = {
+  student: "Доступ: силлабусы, задания, регламенты для студентов",
+  teacher: "Доступ: учебные планы, методические материалы кафедры",
+  admin: "Доступ: внутренние регламенты, документооборот деканата",
+};
+
+const ROLE_PROMPTS = {
+  student: [
+    "Когда сдавать курсовой проект по базам данных?",
+    "Как подать апелляцию по результатам экзамена?",
+    "Что нужно сделать в задании №5?",
+  ],
+  teacher: [
+    "Что в методических рекомендациях кафедры?",
+    "Какие сроки проведения сессии?",
+    "Кратко изложи учебный план курса",
+  ],
+  admin: [
+    "Сколько рассматривается заявление на академический отпуск?",
+    "Как регистрируются входящие заявления студентов?",
+    "Какие общие правила расписания сессии?",
+  ],
 };
 
 // FastAPI отдаёт detail строкой (наши HTTPException) либо массивом объектов
@@ -123,8 +164,8 @@ function App() {
     setHistoryByRole((prev) => ({ ...prev, [targetRole]: [...prev[targetRole], msg] }));
   }
 
-  async function handleSend() {
-    const text = input.trim();
+  async function handleSend(presetText) {
+    const text = (presetText ?? input).trim();
     if (!text || loading) return;
     appendMessage(role, { role: "user", content: text });
     setInput("");
@@ -204,6 +245,7 @@ function App() {
             </button>
           ))}
         </nav>
+        <p className="role-access">{ROLE_ACCESS[role]}</p>
         <p className="disclaimer">
           Ответы агента носят справочно-рекомендательный характер и не являются
           официальным решением, приказом или позицией университета. По вопросам,
@@ -212,7 +254,16 @@ function App() {
       </header>
 
       <main className="messages">
-        {messages.length === 0 && <div className="empty-state">{ROLE_HINTS[role]}</div>}
+        {messages.length === 0 && (
+          <div className="empty-state">
+            <p className="empty-state__lead">С чего начать</p>
+            <div className="prompt-chips">
+              {ROLE_PROMPTS[role].map((q) => (
+                <button key={q} className="prompt-chip" onClick={() => handleSend(q)} disabled={loading}>{q}</button>
+              ))}
+            </div>
+          </div>
+        )}
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
             {m.content}
@@ -236,7 +287,7 @@ function App() {
         <input ref={fileInputRef} type="file" accept=".txt,.md" style={{ display: "none" }} onChange={handleFileUpload} />
         <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
           placeholder="Напишите сообщение агенту…" rows={1} />
-        <button onClick={handleSend} disabled={loading || !input.trim()}>Отправить</button>
+        <button onClick={() => handleSend()} disabled={loading || !input.trim()}>Отправить</button>
       </div>
     </div>
   );
