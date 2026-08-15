@@ -132,6 +132,30 @@ DOCUMENTS = [
 ]
 
 
+# Документы, загруженные пользователями во время работы сервиса.
+# Хранятся в памяти: на бесплатном тарифе Render файловая система
+# эфемерная, поэтому переживать перезапуск они не будут. В продакшене
+# сюда подключается Yandex Object Storage или база данных.
+UPLOADED = []
+
+_counter = {"n": 0}
+
+
 def get_documents_for_role(role: str):
     """Возвращает документы, доступные указанной роли."""
-    return [d for d in DOCUMENTS if role in d["roles"]]
+    return [d for d in DOCUMENTS + UPLOADED if role in d["roles"]]
+
+
+def add_document(title: str, content: str, roles: list, uploaded_by: str = ""):
+    """Добавляет документ в библиотеку и возвращает его."""
+    _counter["n"] += 1
+    doc = {
+        "id": f"up_{_counter['n']:03d}",
+        "title": title,
+        "roles": list(roles),
+        "content": content,
+        "uploaded_by": uploaded_by,
+        "uploaded": True,
+    }
+    UPLOADED.append(doc)
+    return doc

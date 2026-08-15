@@ -23,13 +23,18 @@ class RoleAwareRetriever:
         # нет ни одного внутреннего документа — это не запрет в промпте,
         # а физическое отсутствие данных.
         for role in ("student", "teacher", "admin"):
-            docs = get_documents_for_role(role)
-            texts = [f"{d['title']}. {d['content']}" for d in docs]
-            vectorizer = TfidfVectorizer()
-            matrix = vectorizer.fit_transform(texts) if texts else None
-            self._vectorizers[role] = vectorizer
-            self._matrices[role] = matrix
-            self._docs[role] = docs
+            self.reindex(role)
+
+    def reindex(self, role: str):
+        """Пересобирает индекс роли. Вызывается при старте и после
+        загрузки нового документа в библиотеку."""
+        docs = get_documents_for_role(role)
+        texts = [f"{d['title']}. {d['content']}" for d in docs]
+        vectorizer = TfidfVectorizer()
+        matrix = vectorizer.fit_transform(texts) if texts else None
+        self._vectorizers[role] = vectorizer
+        self._matrices[role] = matrix
+        self._docs[role] = docs
 
     def retrieve(self, role: str, query: str, top_k: int = 3):
         docs = self._docs.get(role, [])

@@ -1,3 +1,5 @@
+import os
+
 from dotenv import load_dotenv
 
 load_dotenv()  # ВАЖНО: до импорта app.llm_client, иначе LLM_PROVIDER и ключи
@@ -10,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.agents import get_system_prompt
-from app.data.documents import get_documents_for_role
+from app.data.documents import add_document, get_documents_for_role
 from app.llm_client import call_llm
 from app.rag import retriever
 
@@ -218,3 +220,143 @@ def summarize_document(req: DocSummaryRequest):
         raise HTTPException(status_code=502, detail=f"Ошибка LLM API: {e}")
 
     return SummarizeResponse(summary=summary_text)
+
+
+class UploadRequest(BaseModel):
+    role: Role
+    title: str
+    content: str
+    uploaded_by: str = ""
+
+
+@app.post("/documents/upload", response_model=DocItem)
+def upload_document(req: UploadRequest):
+    """Добавляет загруженный документ в библиотеку.
+
+    Документ становится доступен той роли, которая его загрузила:
+    материал студента не попадает в индекс администратора. Хранение
+    в памяти — переживёт до перезапуска сервиса (см. README).
+    """
+    if req.role == "guest":
+        raise HTTPException(status_code=403, detail="Для загрузки документов нужен вход")
+    if not req.title.strip() or not req.content.strip():
+        raise HTTPException(status_code=400, detail="Пустой документ")
+
+    doc = add_document(
+        title=req.title.strip()[:200],
+        content=req.content.strip()[:40000],
+        roles=[req.role],
+        uploaded_by=req.uploaded_by[:80],
+    )
+    retriever.reindex(req.role)
+    return DocItem(id=doc["id"], title=doc["title"], preview=_excerpt(doc["content"], 160))
+
+
+# ─────────────────────────────────────────────────────────────────
+# Голос: ElevenLabs через прокси
+# Ключ живёт только на сервере — из браузера он недоступен.
+# ─────────────────────────────────────────────────────────────────
+import base64
+
+import requests as _rq
+from fastapi import Response, UploadFile, File, Form
+
+ELEVEN_BASE = "https://api.elevenlabs.io/v1"
+# Голос по умолчанию — многоязычный, читает и русский, и английский
+DEFAULT_VOICE = os.getenv("ELEVEN_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+
+
+class TTSRequest(BaseModel):
+    text: str
+    lang: Lang = "ru"
+
+
+@app.post("/tts")
+def tts(req: TTSRequest):
+    """Озвучка текста ответа. Возвращает mp3."""
+    key = os.getenv("ELEVENLABS_API_KEY")
+    if not key:
+        raise HTTPException(status_code=503, detail="Озвучка недоступна: ELEVENLABS_API_KEY не задан")
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Пустой текст")
+
+    try:
+        r = _rq.post(
+            f"{ELEVEN_BASE}/text-to-speech/{DEFAULT_VOICE}",
+            headers={"xi-api-key": key, "Content-Type": "application/json"},
+            json={
+                "text": text[:2500],
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": {"stability": 0.4, "similarity_boost": 0.75},
+            },
+            timeout=60,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"ElevenLabs недоступен: {e}")
+
+    if not r.ok:
+        raise HTTPException(status_code=502, detail=f"ElevenLabs error {r.status_code}: {r.text[:300]}")
+    return Response(content=r.content, media_type="audio/mpeg")
+
+
+@app.post("/stt")
+async def stt(audio: UploadFile = File(...), lang: str = Form("ru")):
+    """Распознавание голосового вопроса. Возвращает текст."""
+    key = os.getenv("ELEVENLABS_API_KEY")
+    if not key:
+        raise HTTPException(status_code=503, detail="Распознавание недоступно: ELEVENLABS_API_KEY не задан")
+
+    data = await audio.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Пустая запись")
+
+    try:
+        r = _rq.post(
+            f"{ELEVEN_BASE}/speech-to-text",
+            headers={"xi-api-key": key},
+            files={"file": (audio.filename or "audio.webm", data, audio.content_type or "audio/webm")},
+            data={"model_id": "scribe_v1", "language_code": "rus" if lang == "ru" else "eng"},
+            timeout=90,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"ElevenLabs недоступен: {e}")
+
+    if not r.ok:
+        raise HTTPException(status_code=502, detail=f"ElevenLabs error {r.status_code}: {r.text[:300]}")
+    return {"text": r.json().get("text", "")}
+
+
+# ─────────────────────────────────────────────────────────────────
+# n8n: события, на которые вешаются автоматизации
+# Бэкенд только отправляет событие и не ждёт результата, поэтому
+# недоступный n8n никогда не ломает основной сценарий.
+# ─────────────────────────────────────────────────────────────────
+def notify_n8n(event: str, payload: dict) -> None:
+    url = os.getenv("N8N_WEBHOOK_URL")
+    if not url:
+        return
+    try:
+        _rq.post(url, json={"event": event, "data": payload}, timeout=4)
+    except Exception:
+        pass  # автоматизация не критична для ответа пользователю
+
+
+class TicketRequest(BaseModel):
+    role: Role
+    question: str
+    contact: str = ""
+    uploaded_by: str = ""
+
+
+@app.post("/ticket")
+def ticket(req: TicketRequest):
+    """Заявка в деканат: когда агент не может ответить своими
+    документами, вопрос уходит в n8n и превращается в тикет."""
+    notify_n8n("ticket.created", {
+        "role": req.role,
+        "question": req.question[:2000],
+        "contact": req.contact[:200],
+        "user": req.uploaded_by[:80],
+    })
+    return {"status": "queued"}
