@@ -14,10 +14,15 @@ const AGENT_BLURB = {
     teacher: "Quick review of teaching and organisational materials, key fragments highlighted.",
     admin: "Summarises internal documents and speeds up daily information work.",
   },
+  uz: {
+    student: "Topshiriqlarni tushuntiradi, muddat va talablarni topadi, uzun matnlarni qisqartiradi.",
+    teacher: "O'quv va tashkiliy materiallarni tez ko'rib chiqadi, muhim parchalarni ajratadi.",
+    admin: "Ichki hujjatlarni umumlashtiradi va kundalik ish jarayonini tezlashtiradi.",
+  },
 };
 
 export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
-  const t = T[lang];
+  const t = T[lang] || T.ru;
   const roles = ["student", "teacher", "admin"];
   const logoRef = useRef(null);
   // логотип перебирает цвета агентов при наведении — как при
@@ -102,7 +107,7 @@ export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
                   {ICONS[r]}
                 </div>
                 <h3>{t.agents[r]}</h3>
-                <p>{AGENT_BLURB[lang][r]}</p>
+                <p>{(AGENT_BLURB[lang] || AGENT_BLURB.ru)[r]}</p>
                 <p style={{ marginTop: 12, fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--accent)" }}>
                   {t.access[r]}
                 </p>

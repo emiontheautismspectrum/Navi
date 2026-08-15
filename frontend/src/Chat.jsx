@@ -31,7 +31,7 @@ function saveHistory(uid, data) {
 }
 
 export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
-  const t = T[lang];
+  const t = T[lang] || T.ru;
 
   const [account, setAccount] = useState(null);
   const [agent, setAgent] = useState("guest");
@@ -324,7 +324,7 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
                 {composer}
               </div>
               <div className="chips reveal" style={{ animationDelay: "150ms" }}>
-                {PROMPTS[lang][agent].map((q) => (
+                {(PROMPTS[lang] || PROMPTS.ru)[agent].map((q) => (
                   <button key={q} className="chip" onClick={() => send(q)} disabled={loading}>{q}</button>
                 ))}
               </div>
