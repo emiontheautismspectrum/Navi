@@ -19,6 +19,9 @@ class RoleAwareRetriever:
         self._vectorizers = {}
         self._matrices = {}
         self._docs = {}
+        # guest намеренно отсутствует: у неавторизованного пользователя
+        # нет ни одного внутреннего документа — это не запрет в промпте,
+        # а физическое отсутствие данных.
         for role in ("student", "teacher", "admin"):
             docs = get_documents_for_role(role)
             texts = [f"{d['title']}. {d['content']}" for d in docs]

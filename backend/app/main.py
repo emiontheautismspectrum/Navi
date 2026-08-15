@@ -22,7 +22,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-Role = Literal["student", "teacher", "admin"]
+Role = Literal["guest", "student", "teacher", "admin"]
+Lang = Literal["ru", "en"]
 
 
 class ChatMessage(BaseModel):
@@ -34,6 +35,7 @@ class ChatRequest(BaseModel):
     role: Role
     message: str
     history: Optional[List[ChatMessage]] = None
+    lang: Lang = "ru"
 
 
 class SourceDoc(BaseModel):
@@ -45,6 +47,19 @@ class SourceDoc(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     sources: List[SourceDoc]
+
+
+EN_INSTRUCTION = (
+    "\n\nIMPORTANT: The user interface is in English. Answer in English, "
+    "even though these instructions are written in Russian. Keep document "
+    "titles in their original language."
+)
+
+
+def _with_lang(prompt: str, lang: str) -> str:
+    """Ответ на языке интерфейса: промпты написаны по-русски, поэтому
+    для английского добавляем явную инструкцию."""
+    return prompt + EN_INSTRUCTION if lang == "en" else prompt
 
 
 @app.get("/health")
@@ -63,7 +78,7 @@ def chat(req: ChatRequest):
         f"[Документ: {doc['title']}]\n{doc['content']}" for doc, _score in retrieved
     )
 
-    system_prompt = get_system_prompt(req.role)
+    system_prompt = _with_lang(get_system_prompt(req.role), req.lang)
     if context_block:
         system_prompt += (
             "\n\nНиже приведены фрагменты документов, найденные по запросу "
@@ -94,6 +109,7 @@ def chat(req: ChatRequest):
 class SummarizeRequest(BaseModel):
     role: Role
     text: str
+    lang: Lang = "ru"
 
 
 class SummarizeResponse(BaseModel):
@@ -106,7 +122,7 @@ def summarize(req: SummarizeRequest):
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Пустой текст")
 
-    system_prompt = get_system_prompt(req.role) + (
+    system_prompt = _with_lang(get_system_prompt(req.role), req.lang) + (
         "\n\nСейчас твоя единственная задача — сжато и структурно "
         "суммаризировать текст, который передаст пользователь. Выдели "
         "3-6 ключевых пунктов списком."
