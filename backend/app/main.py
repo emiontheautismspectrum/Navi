@@ -360,3 +360,26 @@ def ticket(req: TicketRequest):
         "user": req.uploaded_by[:80],
     })
     return {"status": "queued"}
+
+
+@app.get("/voices")
+def voices():
+    """Список доступных голосов ElevenLabs — чтобы подобрать тот,
+    который хорошо читает и русский, и английский. Выбранный ID
+    прописывается в переменную ELEVEN_VOICE_ID."""
+    key = os.getenv("ELEVENLABS_API_KEY")
+    if not key:
+        raise HTTPException(status_code=503, detail="ELEVENLABS_API_KEY не задан")
+    try:
+        r = _rq.get(f"{ELEVEN_BASE}/voices", headers={"xi-api-key": key}, timeout=30)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"ElevenLabs недоступен: {e}")
+    if not r.ok:
+        raise HTTPException(status_code=502, detail=f"ElevenLabs error {r.status_code}: {r.text[:300]}")
+    return {
+        "current": DEFAULT_VOICE,
+        "voices": [
+            {"id": v.get("voice_id"), "name": v.get("name"), "labels": v.get("labels", {})}
+            for v in r.json().get("voices", [])
+        ],
+    }
