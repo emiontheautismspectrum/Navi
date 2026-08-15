@@ -1,9 +1,13 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
+# Версии намеренно указаны как минимальные (>=), а не жёстко зафиксированы.
+# Причина: жёсткие пины ломают установку на свежих версиях Python (3.13/3.14),
+# где для старых релизов нет готовых wheel-сборок — pip начинает компилировать
+# pydantic-core из исходников через Rust и падает.
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.6
+pydantic>=2.9.2
 anthropic>=0.69.0
-requests==2.32.3
-scikit-learn==1.5.1
-numpy==1.26.4
-python-multipart==0.0.9
-pydantic==2.9.2
-python-dotenv==1.0.1
+requests>=2.32.3
+scikit-learn>=1.5.1
+numpy>=1.26.4
+python-multipart>=0.0.9
+python-dotenv>=1.0.1
