@@ -44,12 +44,6 @@ services:
       - key: VITE_API_BASE
         value: https://navi-backend.onrender.com
     routes:
-      # Правила проверяются по порядку. Явное правило для превью идёт
-      # первым, иначе общий SPA-роутинг ниже перехватил бы этот путь
-      # и вместо нового дизайна отдавал бы основной интерфейс.
-      - type: rewrite
-        source: /preview-bio.html
-        destination: /preview-bio.html
       - type: rewrite
         source: /*
         destination: /index.html   # SPA-роутинг

@@ -1,5 +1,5 @@
 {
-  "name": "nexus30-edtech-frontend",
+  "name": "navi-frontend",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -15,5 +15,6 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
     "vite": "^5.4.2"
-  }
+  },
+  "description": "Navi — AI-навигатор по университету"
 }
