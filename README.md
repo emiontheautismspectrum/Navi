@@ -6,8 +6,6 @@
 
 [Открыть демо](https://navi-frontend-5474.onrender.com) · [API](https://navi-backend-2x2q.onrender.com/docs)
 
-`NEXUS30` · трек EdTech · кейс Yandex
-
 </div>
 
 ![Navi](docs/landing.png)
@@ -197,6 +195,6 @@ navi/
 
 <div align="center">
 
-Команда **Navi** · NEXUS30 · 2026
+Команда **Navi** · 2026
 
 </div>

@@ -168,7 +168,7 @@ export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
       <div className="wrap">
         <div className="foot">
           <p style={{ margin: 0 }}>{t.footer}</p>
-          <p style={{ margin: "10px 0 0" }}>Navi · NEXUS30 · 2026</p>
+          <p style={{ margin: "10px 0 0" }}>Navi · 2026</p>
         </div>
       </div>
     </div>
