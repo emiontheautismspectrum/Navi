@@ -6,8 +6,9 @@
 # 3. В navi-backend → Environment впишите YANDEX_API_KEY и YANDEX_FOLDER_ID
 #    (в файле они намеренно пустые: репозиторий публичный, секреты в нём
 #    хранить нельзя).
-# 4. После первого деплоя backend скопируйте его URL и впишите
-#    в VITE_API_BASE у navi-frontend, затем сделайте Manual Deploy фронта.
+# 4. Если backend получит другой адрес, поменяйте VITE_API_BASE ниже
+#    и сделайте Manual Deploy фронтенда: Vite подставляет переменные
+#    при сборке, поэтому сохранения значения в панели недостаточно.
 
 services:
   # ── Backend: FastAPI + RAG + LLM ────────────────────────────────────────
@@ -38,11 +39,11 @@ services:
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
     envVars:
-      # ЗАМЕНИТЕ на реальный URL backend после его первого деплоя,
-      # затем сделайте Manual Deploy фронтенда (Vite встраивает
-      # переменную в момент сборки, а не во время выполнения).
+      # Реальный адрес backend. Раньше здесь стоял плейсхолдер, и при
+      # каждой синхронизации Blueprint он перезаписывал значение,
+      # выставленное в панели, — фронтенд начинал стучаться в никуда.
       - key: VITE_API_BASE
-        value: https://navi-backend.onrender.com
+        value: https://navi-backend-2x2q.onrender.com
     routes:
       - type: rewrite
         source: /*
