@@ -1,0 +1,66 @@
+{
+  "name": "Navi · Голосовая сводка для студентов",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8 * * 1-5" }] }
+      },
+      "id": "e5000000-0000-4000-8000-000000000001",
+      "name": "Будни в 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-360, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NAVI_API_URL }}/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ role: 'student', message: 'Какие сроки и дедлайны действуют прямо сейчас? Ответь коротким связным текстом без списков и заголовков — его будут слушать, а не читать.', lang: 'ru' }) }}",
+        "options": { "timeout": 90000 }
+      },
+      "id": "e5000000-0000-4000-8000-000000000002",
+      "name": "Спросить студенческого агента",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NAVI_API_URL }}/tts",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.reply, lang: 'ru' }) }}",
+        "options": { "response": { "response": { "responseFormat": "file", "outputPropertyName": "data" } }, "timeout": 120000 }
+      },
+      "id": "e5000000-0000-4000-8000-000000000003",
+      "name": "Озвучить через ElevenLabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [140, 300]
+    },
+    {
+      "parameters": {
+        "operation": "sendAudio",
+        "chatId": "={{ $env.NAVI_TELEGRAM_CHAT_ID }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": { "caption": "Сводка Navi на сегодня" }
+      },
+      "id": "e5000000-0000-4000-8000-000000000004",
+      "name": "Отправить голосом",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [400, 300]
+    }
+  ],
+  "connections": {
+    "Будни в 08:00": { "main": [[{ "node": "Спросить студенческого агента", "type": "main", "index": 0 }]] },
+    "Спросить студенческого агента": { "main": [[{ "node": "Озвучить через ElevenLabs", "type": "main", "index": 0 }]] },
+    "Озвучить через ElevenLabs": { "main": [[{ "node": "Отправить голосом", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
