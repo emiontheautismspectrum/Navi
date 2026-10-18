@@ -2,12 +2,12 @@ import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { LANGS } from "./i18n.js";
 
 /**
- * Одна кнопка вместо переключателя: показывает текущий язык,
- * по клику раскрывает список всех доступных.
+ * A single button instead of a switcher: shows the current language
+ * and expands the list of all available ones on click.
  *
- * Список позиционируется относительно окна (position: fixed), а не
- * родителя. Иначе его обрезает `overflow: hidden` у сайдбара — именно
- * поэтому меню вылезало обрубком.
+ * The list is positioned relative to the window (position: fixed), not
+ * the parent. Otherwise the sidebar's `overflow: hidden` clips it, which
+ * is exactly why the menu used to appear cut off.
  */
 export default function LangMenu({ lang, setLang, up = false }) {
   const [open, setOpen] = useState(false);
@@ -15,19 +15,19 @@ export default function LangMenu({ lang, setLang, up = false }) {
   const btn = useRef(null);
   const menu = useRef(null);
 
-  // координаты считаем после отрисовки, чтобы знать реальную высоту меню
+  // compute coordinates after rendering, to know the menu's real height
   useLayoutEffect(() => {
     if (!open || !btn.current) return;
     const b = btn.current.getBoundingClientRect();
     const h = menu.current?.offsetHeight || 132;
     const w = menu.current?.offsetWidth || 158;
 
-    // по вертикали: вверх или вниз, но не за край экрана
+    // vertically: up or down, but not past the screen edge
     let top = up ? b.top - h - 6 : b.bottom + 6;
     if (top < 8) top = b.bottom + 6;
     if (top + h > window.innerHeight - 8) top = Math.max(8, b.top - h - 6);
 
-    // по горизонтали: прижимаем к кнопке, но не выпускаем за экран
+    // horizontally: align to the button, but keep it on screen
     let left = up ? b.left : b.right - w;
     left = Math.min(Math.max(8, left), window.innerWidth - w - 8);
 
@@ -46,7 +46,7 @@ export default function LangMenu({ lang, setLang, up = false }) {
     document.addEventListener("mousedown", away);
     document.addEventListener("keydown", esc);
     window.addEventListener("resize", close);
-    // при прокрутке меню «отрывается» от кнопки, поэтому закрываем
+    // on scroll the menu detaches from the button, so close it
     window.addEventListener("scroll", close, true);
     return () => {
       document.removeEventListener("mousedown", away);

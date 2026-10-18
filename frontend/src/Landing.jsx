@@ -25,8 +25,8 @@ export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
   const t = T[lang] || T.ru;
   const roles = ["student", "teacher", "admin"];
   const logoRef = useRef(null);
-  // логотип перебирает цвета агентов при наведении — как при
-  // переключении ролей внутри системы
+  // the logo cycles through the agents' colors on hover, like when
+  // switching roles inside the system
   const [hoverAgent, setHoverAgent] = useState("student");
   const cycle = useRef(null);
 
@@ -43,7 +43,7 @@ export default function Landing({ lang, setLang, theme, setTheme, onEnter }) {
     setHoverAgent("student");
   }
 
-  // запуск системы: анимация расходится из самого логотипа
+  // system launch: the animation expands from the logo itself
   function launch() {
     const r = logoRef.current?.getBoundingClientRect();
     onEnter(r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null);

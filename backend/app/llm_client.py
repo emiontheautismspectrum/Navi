@@ -1,19 +1,19 @@
 """
-Единая точка входа для вызова LLM, независимая от провайдера.
+A single provider-independent entry point for calling an LLM.
 
-Поддерживаемые провайдеры (переключаются переменной LLM_PROVIDER в .env):
-  - anthropic  — Claude API (платно, от ~$5 минимального пополнения)
-  - yandex     — YandexGPT (партнёр кейса, часто бесплатные промокоды на хакатонах)
-  - gemini     — Google Gemini (бесплатный тариф без карты, лимит ~10 запросов/мин)
-  - groq       — Groq (полностью бесплатно, до 14 400 запросов/день, open-модели)
+Supported providers (switched with the LLM_PROVIDER variable in .env):
+  - anthropic  — Claude API (paid, ~$5 minimum top-up)
+  - yandex     — YandexGPT (the case partner, hackathons often give free promo codes)
+  - gemini     — Google Gemini (free tier without a card, limit ~10 requests/min)
+  - groq       — Groq (completely free, up to 14,400 requests/day, open models)
 
-main.py вызывает только call_llm(...) и не знает, какой провайдер за ним стоит —
-это сделано намеренно, чтобы можно было переключать провайдера без правок main.py.
+main.py only calls call_llm(...) and does not know which provider is behind it.
+This is intentional, so the provider can be switched without editing main.py.
 """
 import os
 import requests
 
-# Модель по умолчанию для каждого провайдера, если MODEL_NAME не задан явно
+# Default model for each provider if MODEL_NAME is not set explicitly
 _DEFAULT_MODELS = {
     "anthropic": "claude-sonnet-5",
     "yandex": "yandexgpt/latest",
@@ -24,18 +24,18 @@ _DEFAULT_MODELS = {
 
 def _normalize_messages(messages: list[dict]) -> list[dict]:
     """
-    Приводит историю к виду, который принимают все провайдеры.
+    Brings the history into a form that all providers accept.
 
-    Зачем это нужно: Anthropic API требует, чтобы роли строго чередовались
-    (user → assistant → user...) и первым шло сообщение пользователя.
-    На практике история легко ломается: если запрос упал с ошибкой,
-    сообщение пользователя остаётся в истории без ответа ассистента,
-    и следующий запрос уйдёт с двумя "user" подряд → ошибка 400.
-    Особенно вероятно на бесплатном тарифе Render, где первый запрос
-    после «пробуждения» сервиса может не дойти.
+    Why this is needed: the Anthropic API requires roles to strictly alternate
+    (user → assistant → user...) and the first message to be from the user.
+    In practice the history breaks easily: if a request failed with an error,
+    the user's message stays in the history without an assistant reply,
+    and the next request goes out with two "user" messages in a row → error 400.
+    This is especially likely on the Render free tier, where the first request
+    after the service "wakes up" may not get through.
 
-    Поэтому здесь: выбрасываем пустые сообщения, склеиваем подряд идущие
-    сообщения одной роли и отрезаем ведущие сообщения ассистента.
+    So here we drop empty messages, merge consecutive messages of the same
+    role, and cut off leading assistant messages.
     """
     cleaned = [
         m for m in messages
@@ -43,7 +43,7 @@ def _normalize_messages(messages: list[dict]) -> list[dict]:
         and m.get("role") in ("user", "assistant")
     ]
 
-    # история должна начинаться с пользователя
+    # the history must start with the user
     while cleaned and cleaned[0]["role"] == "assistant":
         cleaned.pop(0)
 
@@ -61,14 +61,14 @@ def _normalize_messages(messages: list[dict]) -> list[dict]:
 
 def call_llm(system_prompt: str, messages: list[dict], max_tokens: int = 800) -> str:
     """
-    messages: список [{"role": "user"|"assistant", "content": "..."}]
-    Возвращает текст ответа. При ошибке кидает RuntimeError с понятным
-    сообщением — main.py оборачивает его в HTTPException 502.
+    messages: a list of [{"role": "user"|"assistant", "content": "..."}]
+    Returns the answer text. On error raises a RuntimeError with a clear
+    message, which main.py wraps in an HTTPException 502.
 
-    LLM_PROVIDER читается здесь, а не на уровне модуля при импорте —
-    это важно, потому что load_dotenv() в main.py вызывается уже после
-    импорта этого файла, и переменная окружения иначе не успела бы
-    подгрузиться из .env к моменту первого запроса.
+    LLM_PROVIDER is read here rather than at module level on import.
+    This matters because load_dotenv() in main.py is called after this
+    file is imported, and otherwise the environment variable would not
+    have been loaded from .env by the time of the first request.
     """
     messages = _normalize_messages(messages)
     if not messages:
@@ -170,7 +170,7 @@ def _call_gemini(system_prompt: str, messages: list[dict], max_tokens: int) -> s
         )
 
     model = os.getenv("MODEL_NAME", _DEFAULT_MODELS["gemini"])
-    # Gemini не различает "system" в истории — роль ассистента называется "model"
+    # Gemini has no "system" role in the history; the assistant role is called "model"
     contents = []
     for m in messages:
         role = "model" if m["role"] == "assistant" else "user"
@@ -198,7 +198,7 @@ def _call_gemini(system_prompt: str, messages: list[dict], max_tokens: int) -> s
 
 
 # ---------------------------------------------------------------------------
-# Groq (бесплатный, OpenAI-совместимый формат)
+# Groq (free, OpenAI-compatible format)
 # ---------------------------------------------------------------------------
 def _call_groq(system_prompt: str, messages: list[dict], max_tokens: int) -> str:
     api_key = os.getenv("GROQ_API_KEY")

@@ -2,8 +2,8 @@ import os
 
 from dotenv import load_dotenv
 
-load_dotenv()  # ВАЖНО: до импорта app.llm_client, иначе LLM_PROVIDER и ключи
-# из .env не успеют попасть в окружение к моменту первого запроса
+load_dotenv()  # IMPORTANT: before importing app.llm_client, otherwise LLM_PROVIDER and the keys
+# from .env will not reach the environment by the time of the first request
 
 from typing import List, Literal, Optional
 
@@ -20,7 +20,7 @@ app = FastAPI(title="NEXUS30 EdTech — University AI Agents")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # для хакатон-демо; в проде сузить до домена фронтенда
+    allow_origins=["*"],  # fine for a hackathon demo; narrow to the frontend domain in production
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -45,7 +45,7 @@ class SourceDoc(BaseModel):
     id: str
     title: str
     score: float
-    excerpt: str = ""   # фрагмент, на котором построен ответ
+    excerpt: str = ""   # the passage the answer is built on
 
 
 class ChatResponse(BaseModel):
@@ -61,8 +61,8 @@ EN_INSTRUCTION = (
 
 
 def _excerpt(text: str, limit: int = 340) -> str:
-    """Короткий фрагмент документа для показа в карточке источника.
-    Обрезаем по границе предложения, чтобы не рвать слова."""
+    """A short document passage to show in the source card.
+    Cut at a sentence boundary so words are not split."""
     text = " ".join(text.split())
     if len(text) <= limit:
         return text
@@ -75,8 +75,8 @@ def _excerpt(text: str, limit: int = 340) -> str:
 
 
 def _with_lang(prompt: str, lang: str) -> str:
-    """Ответ на языке интерфейса: промпты написаны по-русски, поэтому
-    для английского добавляем явную инструкцию."""
+    """Reply in the interface language: the prompts are written in Russian,
+    so an explicit instruction is added for English."""
     return prompt + EN_INSTRUCTION if lang == "en" else prompt
 
 
@@ -90,7 +90,7 @@ def chat(req: ChatRequest):
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="Пустое сообщение")
 
-    # 1) Ролевой RAG-поиск по документам, доступным именно этой роли
+    # 1) Role-based RAG search over the documents available to this role only
     retrieved = retriever.retrieve(req.role, req.message, top_k=3)
     context_block = "\n\n".join(
         f"[Документ: {doc['title']}]\n{doc['content']}" for doc, _score in retrieved
@@ -105,10 +105,10 @@ def chat(req: ChatRequest):
             f"{context_block}"
         )
 
-    # 2) Собираем историю диалога для контекста
+    # 2) Assemble the conversation history for context
     messages = []
     if req.history:
-        for m in req.history[-10:]:  # ограничиваем окно для скорости демо
+        for m in req.history[-10:]:  # limit the window to keep the demo fast
             messages.append({"role": m.role, "content": m.content})
     messages.append({"role": "user", "content": req.message})
 
@@ -141,7 +141,7 @@ class SummarizeResponse(BaseModel):
 
 @app.post("/summarize", response_model=SummarizeResponse)
 def summarize(req: SummarizeRequest):
-    """Суммаризация произвольного текста «на лету» (загруженный документ)."""
+    """Summarize arbitrary text on the fly (an uploaded document)."""
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Пустой текст")
 
@@ -171,11 +171,11 @@ class DocItem(BaseModel):
 
 @app.get("/documents", response_model=List[DocItem])
 def documents(role: Role):
-    """Документы, доступные этой роли.
+    """Documents available to this role.
 
-    У guest список пуст: неавторизованный пользователь не видит ни
-    одного внутреннего документа — это то же разграничение, что и в
-    поиске, только на уровне витрины.
+    The guest list is empty: an unauthenticated user sees no internal
+    documents. This is the same separation as in search, just at the
+    catalog level.
     """
     docs = get_documents_for_role(role) if role != "guest" else []
     return [
@@ -192,11 +192,11 @@ class DocSummaryRequest(BaseModel):
 
 @app.post("/summarize_document", response_model=SummarizeResponse)
 def summarize_document(req: DocSummaryRequest):
-    """Краткое изложение внутреннего документа вуза.
+    """A brief summary of an internal university document.
 
-    Доступ проверяется на сервере: документ ищется только среди
-    доступных этой роли. Подставить чужой doc_id нельзя — он просто
-    не найдётся, и ответ будет 404.
+    Access is checked on the server: the document is looked up only among
+    those available to this role. A foreign doc_id cannot be substituted:
+    it simply will not be found, and the response is 404.
     """
     docs = get_documents_for_role(req.role) if req.role != "guest" else []
     doc = next((d for d in docs if d["id"] == req.doc_id), None)
@@ -227,23 +227,23 @@ class UploadRequest(BaseModel):
     title: str
     content: str
     uploaded_by: str = ""
-    client_id: str = ""   # идентификатор из браузера, чтобы не плодить дубли
+    client_id: str = ""   # identifier from the browser, to avoid creating duplicates
 
 
 @app.post("/documents/upload", response_model=DocItem)
 def upload_document(req: UploadRequest):
-    """Добавляет загруженный документ в библиотеку.
+    """Adds an uploaded document to the library.
 
-    Документ становится доступен той роли, которая его загрузила:
-    материал студента не попадает в индекс администратора. Хранение
-    в памяти — переживёт до перезапуска сервиса (см. README).
+    The document becomes available to the role that uploaded it:
+    a student's material does not reach the administrator's index.
+    Storage is in memory and lasts until the service restarts (see README).
     """
     if req.role == "guest":
         raise HTTPException(status_code=403, detail="Для загрузки документов нужен вход")
     if not req.title.strip() or not req.content.strip():
         raise HTTPException(status_code=400, detail="Пустой документ")
 
-    # Повторная синхронизация из браузера не должна создавать копию
+    # Re-syncing from the browser must not create a copy
     existing = find_by_client_id(req.client_id, req.role)
     if existing is not None:
         return DocItem(id=existing["id"], title=existing["title"],
@@ -261,8 +261,8 @@ def upload_document(req: UploadRequest):
 
 
 # ─────────────────────────────────────────────────────────────────
-# Голос: ElevenLabs через прокси
-# Ключ живёт только на сервере — из браузера он недоступен.
+# Voice: ElevenLabs via a proxy
+# The key lives only on the server and is not accessible from the browser.
 # ─────────────────────────────────────────────────────────────────
 import base64
 
@@ -270,7 +270,7 @@ import requests as _rq
 from fastapi import Response, UploadFile, File, Form
 
 ELEVEN_BASE = "https://api.elevenlabs.io/v1"
-# Голос по умолчанию — многоязычный, читает и русский, и английский
+# The default voice is multilingual and reads both Russian and English
 DEFAULT_VOICE = os.getenv("ELEVEN_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
 
 
@@ -281,7 +281,7 @@ class TTSRequest(BaseModel):
 
 @app.post("/tts")
 def tts(req: TTSRequest):
-    """Озвучка текста ответа. Возвращает mp3."""
+    """Text-to-speech for the answer. Returns mp3."""
     key = os.getenv("ELEVENLABS_API_KEY")
     if not key:
         raise HTTPException(status_code=503, detail="Озвучка недоступна: ELEVENLABS_API_KEY не задан")
@@ -310,7 +310,7 @@ def tts(req: TTSRequest):
 
 @app.post("/stt")
 async def stt(audio: UploadFile = File(...), lang: str = Form("ru")):
-    """Распознавание голосового вопроса. Возвращает текст."""
+    """Recognizes a spoken question. Returns text."""
     key = os.getenv("ELEVENLABS_API_KEY")
     if not key:
         raise HTTPException(status_code=503, detail="Распознавание недоступно: ELEVENLABS_API_KEY не задан")
@@ -336,9 +336,9 @@ async def stt(audio: UploadFile = File(...), lang: str = Form("ru")):
 
 
 # ─────────────────────────────────────────────────────────────────
-# n8n: события, на которые вешаются автоматизации
-# Бэкенд только отправляет событие и не ждёт результата, поэтому
-# недоступный n8n никогда не ломает основной сценарий.
+# n8n: events that automations hook into
+# The backend only sends the event and does not wait for a result, so
+# an unavailable n8n never breaks the main flow.
 # ─────────────────────────────────────────────────────────────────
 def notify_n8n(event: str, payload: dict) -> None:
     url = os.getenv("N8N_WEBHOOK_URL")
@@ -347,7 +347,7 @@ def notify_n8n(event: str, payload: dict) -> None:
     try:
         _rq.post(url, json={"event": event, "data": payload}, timeout=4)
     except Exception:
-        pass  # автоматизация не критична для ответа пользователю
+        pass  # automation is not critical for the user's answer
 
 
 class TicketRequest(BaseModel):
@@ -359,8 +359,8 @@ class TicketRequest(BaseModel):
 
 @app.post("/ticket")
 def ticket(req: TicketRequest):
-    """Заявка в деканат: когда агент не может ответить своими
-    документами, вопрос уходит в n8n и превращается в тикет."""
+    """Request to the dean's office: when the agent cannot answer from its
+    own documents, the question goes to n8n and becomes a ticket."""
     notify_n8n("ticket.created", {
         "role": req.role,
         "question": req.question[:2000],
@@ -372,9 +372,9 @@ def ticket(req: TicketRequest):
 
 @app.get("/voices")
 def voices():
-    """Список доступных голосов ElevenLabs — чтобы подобрать тот,
-    который хорошо читает и русский, и английский. Выбранный ID
-    прописывается в переменную ELEVEN_VOICE_ID."""
+    """List of available ElevenLabs voices, to pick one that reads both
+    Russian and English well. The chosen ID is set in the
+    ELEVEN_VOICE_ID variable."""
     key = os.getenv("ELEVENLABS_API_KEY")
     if not key:
         raise HTTPException(status_code=503, detail="ELEVENLABS_API_KEY не задан")

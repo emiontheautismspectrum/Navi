@@ -4,19 +4,19 @@ import { T, PROMPTS, AGENTS } from "./i18n.js";
 import * as api from "./api.js";
 import LangMenu from "./LangMenu.jsx";
 
-// Демо-учётная запись. В продакшене проверка уходит на сторону
-// SSO университета, здесь она нужна только чтобы показать сценарий.
+// Demo account. In production the check moves to the side of
+// the university's SSO; here it only exists to demonstrate the flow.
 const DEMO_ID = "idnavi";
 const DEMO_CODE = "demo";
 
-/** История хранится отдельно для каждого университетского ID:
- *  разные люди на одном компьютере не видят диалоги друг друга. */
+/** History is stored separately for each university ID:
+ *  different people on one computer do not see each other's dialogs. */
 const histKey = (uid) => `navi:history:${uid || "guest"}`;
 
-/** Загруженные документы храним и в браузере под тем же ID.
- *  Сервер держит их в памяти и теряет при перезапуске (на бесплатном
- *  тарифе Render он засыпает через 15 минут простоя), поэтому при
- *  следующем заходе документы восстанавливаются отсюда. */
+/** Uploaded documents are also stored in the browser under the same ID.
+ *  The server keeps them in memory and loses them on restart (on the free
+ *  Render tier it sleeps after 15 minutes of inactivity), so on the next
+ *  visit the documents are restored from here. */
 const docsKey = (uid) => `navi:docs:${uid || "guest"}`;
 const MAX_DOC_CHARS = 200000;
 
@@ -36,7 +36,7 @@ function saveLocalDoc(uid, doc) {
     all.push(doc);
     localStorage.setItem(docsKey(uid), JSON.stringify(all));
   } catch {
-    /* переполнение хранилища — документ просто не переживёт перезаход */
+    /* storage overflow: the document simply will not survive a revisit */
   }
 }
 
@@ -56,7 +56,7 @@ function saveHistory(uid, data) {
   try {
     localStorage.setItem(histKey(uid), JSON.stringify(data));
   } catch {
-    /* приватный режим или переполнение — не критично */
+    /* private mode or overflow: not critical */
   }
 }
 
@@ -78,7 +78,7 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
   const [openSrc, setOpenSrc] = useState(null);
   const [tab, setTab] = useState("lib");   // lib | hist
   const [dragging, setDragging] = useState(false);
-  const [freshDoc, setFreshDoc] = useState(null);   // подсветка нового документа
+  const [freshDoc, setFreshDoc] = useState(null);   // highlight of the new document
   const dragDepth = useRef(0);
   const [playing, setPlaying] = useState(null);
   const [recording, setRecording] = useState(false);
@@ -91,7 +91,7 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
   const turns = byAgent[agent] || [];
   const isGuest = agent === "guest";
 
-  // история переключается вместе с учётной записью
+  // history switches together with the account
   useEffect(() => { setByAgent(loadHistory(account?.id)); }, [account]);
   useEffect(() => { saveHistory(account?.id, byAgent); }, [byAgent, account]);
 
@@ -99,15 +99,15 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
     let dead = false;
 
     async function sync() {
-      // Сначала возвращаем на сервер документы, сохранённые в браузере.
-      // Повторная отправка безопасна: сервер узнаёт их по client_id
-      // и не создаёт копий.
+      // First send back to the server the documents saved in the browser.
+      // Re-sending is safe: the server recognizes them by client_id
+      // and creates no copies.
       if (account && agent !== "guest") {
         const mine = loadLocalDocs(account.id).filter((d) => d.role === agent);
         for (const d of mine) {
           try {
             await api.uploadDocument(agent, d.title, d.content, account.id, d.client_id);
-          } catch { /* сервер недоступен — покажем то, что есть */ }
+          } catch { /* server unavailable: show what we have */ }
           if (dead) return;
         }
       }
@@ -141,8 +141,8 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
   function push(turn) {
     setByAgent((p) => ({ ...p, [agent]: [...(p[agent] || []), turn] }));
   }
-  // Удаление одной записи. Индексы после удаления сдвигаются, поэтому
-  // сбрасываем раскрытый фрагмент — иначе откроется чужой источник.
+  // Deleting a single entry. Indexes shift after deletion, so we reset
+  // the expanded passage, otherwise someone else's source would open.
   function removeTurn(idx) {
     setOpenSrc(null);
     setByAgent((p) => ({ ...p, [agent]: (p[agent] || []).filter((_, i) => i !== idx) }));
@@ -201,9 +201,9 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
     }
   }
 
-  // Загруженный документ и суммаризируется, и остаётся в библиотеке роли
-  // Читаются только текстовые форматы. PDF и DOCX прочитались бы как
-  // двоичный мусор и попали в индекс — поэтому отсекаем сразу.
+  // An uploaded document is both summarized and kept in the role's library.
+  // Only text formats are read. PDF and DOCX would be read as binary
+  // garbage and end up in the index, so we reject them immediately.
   const TEXT_EXT = [".txt", ".md", ".csv", ".markdown", ".log"];
 
   async function handleFile(file) {
@@ -223,9 +223,9 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
 
     push({ question: `${t.uploaded}: ${file.name}`, answer: null, sources: [], error: null });
     setLoading(true);
-    // Суммаризация и добавление в библиотеку — независимые операции.
-    // Раньше ошибка загрузки глушилась, и система всё равно писала
-    // «добавлен в библиотеку», хотя документа там не было.
+    // Summarization and adding to the library are independent operations.
+    // Previously an upload error was swallowed and the system still wrote
+    // "added to the library" although the document was not there.
     let uploadErr = null;
     const doc = await api
       .uploadDocument(agent, title, text, account?.id || "", clientId)
@@ -235,10 +235,10 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
       if (text.length <= MAX_DOC_CHARS) {
         saveLocalDoc(account?.id, { client_id: clientId, role: agent, title, content: text });
       }
-      // список обновляем сразу, не дожидаясь суммаризации
+      // update the list right away, without waiting for summarization
       try {
         setDocs(await api.listDocuments(agent));
-      } catch { /* список обновится при следующем переключении агента */ }
+      } catch { /* the list will update on the next agent switch */ }
       setFreshDoc(doc.id);
       setTab("lib");
       setTimeout(() => setFreshDoc(null), 4000);
@@ -264,8 +264,8 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
     handleFile(file);
   }
 
-  // Счётчик нужен из-за всплытия dragleave от вложенных элементов:
-  // без него подсветка мигает при движении курсора внутри окна.
+  // The counter is needed because dragleave bubbles up from nested elements:
+  // without it the highlight flickers when the cursor moves inside the window.
   function onDragEnter(e) {
     e.preventDefault();
     dragDepth.current += 1;
@@ -406,8 +406,8 @@ export default function Chat({ lang, setLang, theme, setTheme, onHome }) {
           {t.access[agent]}
         </div>
 
-        {/* Библиотека и история — вкладки: открыта одна, ей достаётся
-            вся высота. Раньше два списка делили место и оба были обрезаны. */}
+        {/* Library and history are tabs: one is open and gets the full
+            height. Previously the two lists shared the space and both were clipped. */}
         <div className="panel on-panel">
           <div className="tabs" role="tablist">
             <button role="tab" aria-selected={tab === "lib"}

@@ -1,9 +1,12 @@
 """
-Ролевые AI-агенты университета.
+Role-based AI agents for the university.
 
-Каждая роль получает свой system prompt, ограничивающий стиль ответа
-и явно запрещающий выдавать себя за официальное решение вуза —
-это требование зафиксировано в ограничениях кейса (п.9).
+Each role gets its own system prompt that constrains the answer style
+and explicitly forbids presenting itself as an official university decision.
+This requirement is recorded in the case constraints (item 9).
+
+Note: the prompts themselves are written in Russian; main.py appends an
+explicit instruction when the interface language is English.
 """
 
 BASE_RULES = (

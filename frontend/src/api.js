@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
-/** FastAPI отдаёт detail строкой или массивом (валидация). Без нормализации
- *  массив превратился бы в "[object Object]". */
+/** FastAPI returns detail as a string or an array (validation). Without
+ *  normalization the array would turn into "[object Object]". */
 function formatError(err, status) {
   const d = err && err.detail;
   if (typeof d === "string") return d;
@@ -42,13 +42,13 @@ export const uploadDocument = (role, title, content, uploaded_by, client_id) =>
 export const createTicket = (role, question, contact, uploaded_by) =>
   req("/ticket", json({ role, question, contact, uploaded_by })).then((r) => r.json());
 
-/** Озвучка ответа. Возвращает objectURL для <audio>. */
+/** Text-to-speech for the answer. Returns an objectURL for <audio>. */
 export async function speak(text, lang) {
   const res = await req("/tts", json({ text, lang }));
   return URL.createObjectURL(await res.blob());
 }
 
-/** Распознавание голосового вопроса. */
+/** Speech recognition for a spoken question. */
 export async function transcribe(blob, lang) {
   const fd = new FormData();
   fd.append("audio", blob, "question.webm");

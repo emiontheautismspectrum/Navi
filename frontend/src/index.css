@@ -1,7 +1,7 @@
 /* ─────────────────────────────────────────────────────────────
-   NAVI — дизайн-система
-   Биолюминесценция: глубокая сине-зелёная ночь, свечение как акцент.
-   Акцент задаётся агентом, поэтому цвет — часть навигации, а не декор.
+   NAVI — design system
+   Bioluminescence: a deep blue-green night, glow as the accent.
+   The accent is set by the agent, so color is part of navigation, not decoration.
    ───────────────────────────────────────────────────────────── */
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
@@ -49,7 +49,7 @@ a{color:inherit}
 .reveal{opacity:0;transform:translateY(12px);animation:rise .6s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
 
-/* знак */
+/* mark */
 .mark{display:block}
 .mark .arc{stroke:var(--text-faint);opacity:.3;transition:stroke .45s,opacity .45s}
 .mark .arc.live{stroke:var(--accent);opacity:1;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--accent) 75%,transparent))}
@@ -57,7 +57,7 @@ a{color:inherit}
 .mark .halo{fill:none;stroke:var(--accent);opacity:.22;transition:stroke .45s}
 @keyframes corePulse{0%,100%{opacity:.6}50%{opacity:1}}
 
-/* кнопки */
+/* buttons */
 .btn{border:none;border-radius:var(--r-sm);cursor:pointer;font-family:var(--font-mono);font-size:11px;
   letter-spacing:.08em;text-transform:uppercase;padding:11px 18px;transition:all .2s}
 .btn-primary{background:var(--accent);color:var(--abyss)}
@@ -74,7 +74,7 @@ a{color:inherit}
 
 .eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
 
-/* ─────────────── ЛЕНДИНГ ─────────────── */
+/* ─────────────── LANDING ─────────────── */
 .landing{position:relative;z-index:1;overflow-x:hidden}
 .nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:16px 32px;
   background:color-mix(in srgb,var(--abyss) 82%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--rule)}
@@ -119,7 +119,7 @@ section{padding:60px 0}
 .cta{text-align:center;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-xl);padding:44px 32px}
 .foot{border-top:1px solid var(--rule);padding:28px 0 40px;font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);line-height:1.6;text-align:center}
 
-/* ─────────────── ПРИЛОЖЕНИЕ ─────────────── */
+/* ─────────────── APP ─────────────── */
 .shell{position:relative;display:flex;height:100%;z-index:1}
 .sidebar{position:relative;z-index:2;width:var(--panel);flex:0 0 var(--panel);border-right:1px solid var(--rule);
   background:color-mix(in srgb,var(--deep) 92%,transparent);display:flex;flex-direction:column;padding:18px 14px 14px;overflow:hidden;
@@ -280,14 +280,14 @@ section{padding:60px 0}
 ::-webkit-scrollbar-thumb{background:var(--rule);border-radius:5px}
 
 
-/* ─── Переключатели в шапке: узкие, не тянутся ─── */
+/* ─── Header toggles: narrow, do not stretch ─── */
 .tgl-sm{flex:0 0 auto;width:38px;height:32px;padding:0}
 .nav .tgl{flex:0 0 auto}
 
-/* ─── Меню выбора языка ─── */
-/* Меню языка живёт в координатах окна: сайдбар обрезает всё, что
-   выходит за его края (overflow:hidden), и абсолютное меню внутри
-   него показывалось обрубком. */
+/* ─── Language menu ─── */
+/* The language menu lives in window coordinates: the sidebar clips
+   everything beyond its edges (overflow:hidden), and an absolute menu
+   inside it showed up cut off. */
 .langmenu{position:fixed;z-index:120;margin:0;padding:5px;list-style:none;
   min-width:158px;background:var(--deep);border:1px solid var(--rule);border-radius:var(--r-md);
   box-shadow:0 14px 40px rgba(0,0,0,.4);animation:rise .18s var(--ease) both}
@@ -298,7 +298,7 @@ section{padding:60px 0}
 .langmenu button.on{color:var(--accent)}
 .langmenu .code{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;opacity:.7;width:22px;flex:none}
 
-/* ─── Живой логотип в шапке ─── */
+/* ─── Live logo in the header ─── */
 .logo-launch{background:transparent;border:1px solid transparent;border-radius:50%;padding:5px;cursor:pointer;
   display:grid;place-items:center;flex:0 0 auto;transition:transform .3s var(--ease),border-color .4s ease,box-shadow .4s ease}
 .logo-launch:hover{transform:scale(1.16);border-color:color-mix(in srgb,var(--accent) 45%,transparent);
@@ -307,7 +307,7 @@ section{padding:60px 0}
 .logo-launch:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 @keyframes logoBeat{0%,100%{transform:scale(1.13)}50%{transform:scale(1.24)}}
 
-/* ─── Раскрытие системы из логотипа ─── */
+/* ─── System unfolding from the logo ─── */
 .burst{position:fixed;z-index:200;border-radius:50%;pointer-events:none;
   background:radial-gradient(circle,var(--accent) 0%,color-mix(in srgb,var(--accent) 70%,var(--abyss)) 55%,var(--abyss) 100%);
   transform:scale(0);animation:burstOut .82s var(--ease) forwards}
@@ -318,7 +318,7 @@ section{padding:60px 0}
 }
 @media(prefers-reduced-motion:reduce){.burst{display:none}.logo-launch:hover{animation:none}}
 
-/* ─── История: удаление ─── */
+/* ─── History: deletion ─── */
 .clear-all{display:block;width:100%;margin-top:10px;background:transparent;border:1px dashed var(--rule);
   border-radius:8px;padding:7px;cursor:pointer;color:var(--text-faint);
   font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;transition:all .18s}
@@ -329,8 +329,8 @@ section{padding:60px 0}
 
 .hist-row{display:flex;align-items:center;gap:2px}
 .hist-row .li{flex:1;min-width:0}
-/* Крестик появляется при наведении на строку, чтобы список
-   не выглядел перегруженным. На тач-устройствах — всегда виден. */
+/* The cross appears on row hover so the list does not look
+   overloaded. On touch devices it is always visible. */
 .hist-row .del{flex:none;width:22px;height:22px;display:grid;place-items:center;border:none;border-radius:6px;
   background:transparent;color:var(--text-faint);cursor:pointer;opacity:0;transition:opacity .16s,color .16s,background .16s}
 .hist-row:hover .del,.hist-row .del:focus-visible{opacity:1}
@@ -340,7 +340,7 @@ section{padding:60px 0}
 @media(hover:none){.hist-row .del{opacity:.65}}
 
 
-/* ─── Библиотека и история как вкладки ─── */
+/* ─── Library and history as tabs ─── */
 .panel{flex:1;min-height:0;display:flex;flex-direction:column;margin-top:16px}
 .tabs{display:flex;gap:4px;padding:3px;border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);margin-bottom:10px;flex:none}
 .tab{flex:1;min-width:0;background:transparent;border:none;border-radius:7px;cursor:pointer;padding:6px 8px;
@@ -353,7 +353,7 @@ section{padding:60px 0}
 .tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .panel-body{flex:1;min-height:0;overflow-y:auto}
 
-/* ─── Перетаскивание файла ─── */
+/* ─── File drag and drop ─── */
 .dropzone{position:absolute;inset:0;z-index:40;display:grid;place-items:center;padding:24px;
   background:color-mix(in srgb,var(--abyss) 82%,transparent);backdrop-filter:blur(3px);animation:fade .18s ease both}
 .dropzone-inner{display:flex;flex-direction:column;align-items:center;gap:14px;padding:38px 44px;
@@ -361,8 +361,8 @@ section{padding:60px 0}
   color:var(--accent);text-align:center;max-width:420px}
 .dropzone-inner p{margin:0;font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--text-dim)}
 
-/* Только что добавленный документ подсвечивается на несколько секунд,
-   иначе он теряется в списке и непонятно, попал файл в библиотеку или нет */
+/* A just-added document is highlighted for a few seconds, otherwise it
+   gets lost in the list and it is unclear whether the file reached the library */
 .li.fresh{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--text);
   animation:freshPulse 2.4s ease-in-out 2}
 @keyframes freshPulse{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 14px color-mix(in srgb,var(--accent) 35%,transparent)}}
@@ -370,16 +370,16 @@ section{padding:60px 0}
   letter-spacing:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
 [data-theme="light"] .mini.warn{border-color:color-mix(in srgb,#A85A10 45%,transparent);color:#A85A10}
 
-/* ─── Узкие экраны: телефоны ─── */
+/* ─── Narrow screens: phones ─── */
 @media(max-width:520px){
-  /* Шапка лендинга: на 380px в неё не помещались название, два
-     переключателя и логотип-кнопка одновременно */
+  /* Landing header: at 380px the title, two toggles and the logo
+     button did not fit at the same time */
   .nav{padding:12px 14px;gap:8px}
   .nav .name{font-size:17px}
   .tgl-sm{width:34px;height:30px}
   .logo-launch{padding:3px}
 
-  /* Кнопки первого экрана во всю ширину — попасть пальцем проще */
+  /* First-screen buttons at full width: easier to hit with a finger */
   .hero-actions{flex-direction:column;align-items:stretch}
   .hero-actions .btn{width:100%}
 
@@ -390,13 +390,13 @@ section{padding:60px 0}
   .safety{padding:20px}
   .cta{padding:30px 18px}
 
-  /* Три кнопки в поле ввода съедали место под текст */
+  /* Three buttons in the input field ate the space for text */
   .box textarea{padding-right:120px;font-size:14.5px}
   .footer-in .box textarea{padding-right:120px}
   .box-actions{gap:5px;right:9px;bottom:9px}
   .icon-btn,.send{width:31px;height:31px}
 
-  /* «Отправить заявку в деканат» не влезает в строку рядом с озвучкой */
+  /* "Send a request to the dean's office" does not fit on the line next to the voice button */
   .turn-actions{flex-wrap:wrap;padding-left:14px}
   .ans{padding-left:14px}
   .think{padding-left:14px}

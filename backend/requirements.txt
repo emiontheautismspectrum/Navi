@@ -1,7 +1,7 @@
-# Версии намеренно указаны как минимальные (>=), а не жёстко зафиксированы.
-# Причина: жёсткие пины ломают установку на свежих версиях Python (3.13/3.14),
-# где для старых релизов нет готовых wheel-сборок — pip начинает компилировать
-# pydantic-core из исходников через Rust и падает.
+# Versions are intentionally given as minimums (>=) rather than pinned strictly.
+# Reason: strict pins break installation on recent Python versions (3.13/3.14),
+# where old releases have no prebuilt wheels, so pip starts compiling
+# pydantic-core from source via Rust and fails.
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.6
 pydantic>=2.9.2

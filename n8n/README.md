@@ -1,113 +1,113 @@
-# Автоматизации
+# Automations
 
-Navi отвечает на вопросы, но университет — это не только вопросы. Это заявки, документооборот, рассылки. Здесь лежат пять сценариев n8n, которые встраивают систему в эти процессы.
+Navi answers questions, but a university is more than questions. It is requests, document flow, mailings. This folder holds five n8n workflows that embed the system into those processes.
 
-Логика простая: бэкенд сообщает о событии, n8n решает, что с ним делать. Такое разделение оправдано тем, что маршруты и адресаты в каждом вузе свои, и зашивать их в код было бы неправильно — их меняет администратор мышкой, а не разработчик.
+The logic is simple: the backend reports an event, and n8n decides what to do with it. This split is justified because routes and recipients differ at every university, and hard-coding them would be wrong. An administrator changes them with a mouse, not a developer.
 
-## Импорт
+## Import
 
-**Workflows → Import from File**, по одному файлу за раз.
+**Workflows → Import from File**, one file at a time.
 
-Затем в **Settings → Variables** пропишите то, что сценарии ожидают найти:
+Then in **Settings → Variables** set what the workflows expect to find:
 
-| Переменная | Значение | Нужна для |
+| Variable | Value | Needed for |
 |---|---|---|
-| `NAVI_API_URL` | адрес бэкенда, вида `https://navi-backend-xxxx.onrender.com` | 02, 03 |
-| `NAVI_TELEGRAM_CHAT_ID` | идентификатор чата или группы деканата | 01, 03 |
-| `NAVI_DOCS_SOURCE_URL` | источник документов вуза | 02 |
+| `NAVI_API_URL` | the backend address, like `https://navi-backend-xxxx.onrender.com` | 02, 03 |
+| `NAVI_TELEGRAM_CHAT_ID` | the ID of the dean's office chat or group | 01, 03 |
+| `NAVI_DOCS_SOURCE_URL` | the university's document source | 02 |
 
-Для проверки 02 можно взять готовый набор из этой же папки:
+To test 02 you can use the ready-made set from this same folder:
 
 ```
 https://raw.githubusercontent.com/emiontheautismspectrum/Navi/main/n8n/sample-docs.json
 ```
 
-Шесть документов — по два на каждую роль. Пригодится, пока настоящая выгрузка из вуза не подключена.
+Six documents, two per role. It is handy until the real export from the university is connected.
 
-Для отправки в Telegram понадобится бот: напишите @BotFather команду `/newbot`, получите токен и добавьте его один раз в **Credentials → New → Telegram API**.
+To send to Telegram you need a bot: message @BotFather with `/newbot`, get a token, and add it once in **Credentials → New → Telegram API**.
 
 ---
 
-## 01 · Заявки в деканат
+## 01 · Requests to the dean's office
 
-Когда агент не может ответить своими документами, пользователь отправляет заявку. Бэкенд шлёт событие сюда, сценарий присваивает номер и определяет адресата по роли автора: студент попадает в учебный отдел, преподаватель — на кафедру, администратор — в канцелярию. Готовое сообщение уходит в Telegram.
+When an agent cannot answer from its documents, the user submits a request. The backend sends an event here, and the workflow assigns a number and picks the recipient by the author's role: a student goes to the study department, a teacher to the faculty department, an administrator to the chancellery. The finished message goes to Telegram.
 
-Именно эта маршрутизация и оправдывает здесь n8n. Отправить сообщение бэкенд умеет и сам, а вот решать, в какое подразделение направить вопрос, должен тот, кто знает структуру конкретного университета.
+This routing is exactly what justifies n8n here. The backend can send a message itself, but deciding which department to route a question to should be up to someone who knows the structure of a specific university.
 
-**Подключение.** После импорта откройте узел «Событие из Navi» и скопируйте Production URL вебхука — именно Production, потому что Test работает только пока открыта вкладка. Впишите его в переменные окружения бэкенда:
+**Setup.** After import, open the "Event from Navi" node and copy the webhook's Production URL. It must be Production, because Test only works while the tab is open. Put it in the backend's environment variables:
 
 ```
 navi-backend → Environment → N8N_WEBHOOK_URL
 ```
 
-Бэкенд отправляет событие и не ждёт ответа. Если n8n выключен, недоступен или ещё не настроен, пользователь этого не заметит — заявка просто не создастся, а всё остальное продолжит работать.
+The backend sends the event and does not wait for a response. If n8n is off, unavailable, or not yet configured, the user will not notice: the request just will not be created, and everything else keeps working.
 
 ---
 
-## 02 · Синхронизация библиотеки
+## 02 · Library sync
 
-Каждое утро в шесть сценарий забирает документы из источника вуза, отсеивает пустые и слишком короткие, и загружает остальные в библиотеку через `/documents/upload`. Документ сразу попадает в поисковый индекс своей роли и участвует в ответах.
+Every morning at six the workflow pulls documents from the university's source, filters out empty and too-short ones, and loads the rest into the library via `/documents/upload`. A document immediately lands in its role's search index and takes part in answers.
 
-Источник должен отдавать массив такого вида:
+The source must return an array like this:
 
 ```json
 [
-  { "title": "Регламент сессии", "content": "полный текст…", "role": "student" },
-  { "title": "Приказ №128",      "content": "полный текст…", "role": "admin"   }
+  { "title": "Exam session regulations", "content": "full text…", "role": "student" },
+  { "title": "Order No. 128",            "content": "full text…", "role": "admin"   }
 ]
 ```
 
-Поле `role` решает, какому агенту документ станет доступен — это и есть точка, где разграничение доступа задаётся на входе, а не постфактум. Если роль не указана или незнакома, документ уйдёт студенческому агенту.
+The `role` field decides which agent the document becomes available to. This is the point where access separation is set on input rather than after the fact. If the role is missing or unknown, the document goes to the student agent.
 
-Расписание меняется в первом узле: выражение `0 6 * * *` означает ежедневно в шесть утра.
-
----
-
-## 03 · Утренний дайджест
-
-По будням в восемь сценарий задаёт каждому агенту свой вопрос через `/chat`, собирает ответы вместе со ссылками на источники и отправляет одним сообщением.
-
-Вопросы намеренно разные. Одинаковый запрос дал бы трём агентам похожие ответы, а смысл ролевой модели в обратном: студенту нужны дедлайны, преподавателю — организационные материалы кафедры, администратору — сроки рассмотрения заявлений. Ответы соберутся из разных документов, потому что индексы у агентов тоже разные.
-
-Тексты вопросов правятся в узле «Вопрос под каждую роль».
+The schedule is changed in the first node: the expression `0 6 * * *` means daily at six in the morning.
 
 ---
 
-## Проверка
+## 03 · Morning digest
 
-Заявки проверяются вживую: откройте Navi, задайте вопрос и нажмите под ответом «Отправить заявку в деканат». Сообщение должно прийти в Telegram за пару секунд.
+On weekdays at eight the workflow asks each agent its own question via `/chat`, collects the answers along with links to sources, and sends them as one message.
 
-Остальные два сценария не нужно ждать по расписанию — кнопка **Execute Workflow** запускает их вручную. После синхронизации откройте библиотеку в Navi, новые документы будут в списке.
+The questions are intentionally different. An identical query would give the three agents similar answers, while the point of the role model is the opposite: a student needs deadlines, a teacher needs the department's organizational materials, an administrator needs the review times for applications. The answers are assembled from different documents, because the agents' indexes are different too.
 
-Что именно пришло в n8n и чем закончилось выполнение, видно в разделе **Executions**.
+The question texts are edited in the "Question for each role" node.
 
-## Если не работает
+---
 
-| Симптом | В чём обычно дело |
+## Testing
+
+Requests are tested live: open Navi, ask a question, and press "Send a request to the dean's office" under the answer. The message should arrive in Telegram within a couple of seconds.
+
+The other two workflows do not need to wait for their schedule: the **Execute Workflow** button runs them manually. After the sync, open the library in Navi and the new documents will be in the list.
+
+What exactly arrived in n8n and how the run ended is visible in the **Executions** section.
+
+## If it doesn't work
+
+| Symptom | Usually the cause |
 |---|---|
-| Заявка не приходит | В Render не задан `N8N_WEBHOOK_URL` либо скопирован Test URL вместо Production |
-| Сценарий срабатывает, Telegram молчит | Не добавлены учётные данные бота, неверный идентификатор чата или бот не состоит в группе |
-| Документы не загружаются | Источник отдаёт другой формат, либо текст короче 120 символов и отсекается фильтром |
-| Дайджест пустой | Бэкенд спал: на бесплатном тарифе Render первый запрос после простоя идёт до минуты |
-| Голосовая сводка не отправляется | В Render не задан `ELEVENLABS_API_KEY`, либо ответ агента длиннее лимита озвучки |
+| The request does not arrive | `N8N_WEBHOOK_URL` is not set in Render, or the Test URL was copied instead of Production |
+| The workflow fires but Telegram is silent | The bot credentials were not added, the chat ID is wrong, or the bot is not in the group |
+| Documents are not uploaded | The source returns a different format, or the text is shorter than 120 characters and is dropped by the filter |
+| The digest is empty | The backend was asleep: on the Render free tier the first request after idle takes up to a minute |
+| The voice summary is not sent | `ELEVENLABS_API_KEY` is not set in Render, or the agent's answer is longer than the speech limit |
 
 
 ---
 
-## 04 · Держать сервис разбуженным
+## 04 · Keep the service awake
 
-На бесплатном тарифе Render сервис засыпает после пятнадцати минут простоя, и первый запрос после этого идёт до минуты. Для демонстрации это плохо: человек открывает ссылку, видит зависший интерфейс и уходит.
+On the Render free tier a service goes to sleep after fifteen minutes of inactivity, and the first request after that takes up to a minute. For a demo that is bad: a person opens the link, sees a frozen interface, and leaves.
 
-Сценарий раз в десять минут дёргает `/health`. Сервис не успевает заснуть, ответы всегда быстрые. Если проверка не прошла, в Telegram уходит предупреждение — узнаете о падении раньше, чем о нём сообщит пользователь.
+The workflow pings `/health` every ten minutes. The service never gets to fall asleep, so answers are always fast. If the check fails, a warning goes to Telegram, so you learn about an outage before a user reports it.
 
-Дополнительных переменных не требует: работает на тех же `NAVI_API_URL` и `NAVI_TELEGRAM_CHAT_ID`.
+It needs no additional variables: it works on the same `NAVI_API_URL` and `NAVI_TELEGRAM_CHAT_ID`.
 
 ---
 
-## 05 · Голосовая сводка
+## 05 · Voice summary
 
-То же, что дайджест, но студент получает не текст, а голосовое сообщение: сценарий спрашивает агента, прогоняет ответ через `/tts` и отправляет аудио в Telegram.
+The same as the digest, but a student receives not text but a voice message: the workflow asks the agent, runs the answer through `/tts`, and sends the audio to Telegram.
 
-Агента отдельно просят ответить связным текстом без списков и заголовков — то, что хорошо читается глазами, на слух звучит как перечисление пунктов.
+The agent is separately asked to answer in connected text without lists and headings, because what reads well by eye sounds like an enumeration of points by ear.
 
-Нужен `ELEVENLABS_API_KEY` в переменных бэкенда. Без него сценарий остановится на шаге озвучки, остальные продолжат работать.
+It needs `ELEVENLABS_API_KEY` in the backend variables. Without it the workflow stops at the speech step, while the others keep working.

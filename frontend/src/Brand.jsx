@@ -1,8 +1,8 @@
 /**
- * Знак Navi: ядро — база документов вуза, три дуги — три агента.
- * Светится дуга активного агента; у гостя не светится ни одна,
- * потому что доступа к документам у него нет. Знак показывает
- * состояние системы, а не просто украшает.
+ * The Navi mark: the core is the university's document base, the three arcs
+ * are the three agents. The active agent's arc glows; for a guest none
+ * glows, because a guest has no access to documents. The mark shows
+ * the state of the system rather than just decorating.
  */
 export function Mark({ agent = "guest", size = 30 }) {
   const arcs = [

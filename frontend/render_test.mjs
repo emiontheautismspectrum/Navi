@@ -1,11 +1,11 @@
-// Рендерим оба экрана на всех языках и в обеих темах.
-// Любая необработанная ошибка означает белый экран у пользователя.
+// Render both screens in all languages and both themes.
+// Any unhandled error means a white screen for the user.
 import { renderToString } from "react-dom/server";
 import React from "react";
 import Landing from "./src/Landing.jsx";
 import Chat from "./src/Chat.jsx";
 
-// заглушки браузерных API, которых нет в Node
+// stubs for browser APIs that do not exist in Node
 global.window = { innerWidth: 1400, addEventListener(){}, removeEventListener(){} };
 global.localStorage = { getItem: () => null, setItem(){} };
 global.location = { hash: "" };
@@ -14,9 +14,9 @@ global.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve([])
 
 const noop = () => {};
 
-// useLayoutEffect не работает при серверном рендере — в реальности
-// приложение рендерится только в браузере, поэтому это шум харнесса,
-// а не ошибка. Глушим, чтобы не маскировать настоящие проблемы.
+// useLayoutEffect does nothing in server rendering. In reality the app
+// renders only in the browser, so this is harness noise, not an error.
+// Silenced so it does not mask real problems.
 const warn = console.error;
 console.error = (...a) =>
   String(a[0]).includes("useLayoutEffect does nothing on the server") ? undefined : warn(...a);
@@ -30,8 +30,8 @@ for (const lang of ["ru", "en", "uz"]) {
     ]) {
       try {
         const html = renderToString(React.createElement(C, props));
-        if (!html || html.length < 200) throw new Error("подозрительно пустой вывод");
-        console.log(`  OK  ${name} · ${lang} · ${theme} (${html.length} симв.)`);
+        if (!html || html.length < 200) throw new Error("suspiciously empty output");
+        console.log(`  OK  ${name} · ${lang} · ${theme} (${html.length} chars)`);
       } catch (e) {
         fails++;
         console.log(`  FAIL ${name} · ${lang} · ${theme}: ${e.message}`);
@@ -39,5 +39,5 @@ for (const lang of ["ru", "en", "uz"]) {
     }
   }
 }
-console.log(fails === 0 ? "\nВСЕ КОМБИНАЦИИ РЕНДЕРЯТСЯ" : `\nПАДЕНИЙ: ${fails}`);
+console.log(fails === 0 ? "\nALL COMBINATIONS RENDER" : `\nFAILURES: ${fails}`);
 process.exit(fails ? 1 : 0);

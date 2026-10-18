@@ -2,67 +2,69 @@
 
 # Navi
 
-**AI-навигатор по университету**
+**An AI navigator for universities**
 
-[Открыть демо](https://navi-frontend-5474.onrender.com) · [API](https://navi-backend-2x2q.onrender.com/docs)
+[Open the demo](https://navi-frontend-5474.onrender.com) · [API](https://navi-backend-2x2q.onrender.com/docs)
+
+English · [Русский](README.ru.md)
 
 </div>
 
 ![Navi](docs/landing.png)
 
-## Зачем это нужно
+## Why this exists
 
-Спросите у любого чат-бота, когда сдавать курсовой в вашем вузе. Он не ответит: этих документов нет ни в одной обученной модели, они лежат во внутренних системах университета.
+Ask any chatbot when to hand in a term paper at your university. It can't answer: those documents are not in any trained model. They live in the university's internal systems.
 
-Казалось бы, решение простое — загрузить документы вуза в AI. Но тогда первый же студент спросит про внутренний документооборот деканата и получит ответ. У универсальных ассистентов нет понятия «этому пользователю нельзя».
+The obvious fix is to load the university's documents into an AI. But then the first student asks about the dean's office internal paperwork and gets an answer. General-purpose assistants have no concept of "this user must not see this."
 
-Университеты оказываются между двух стен. Модель, которая могла бы помочь, не имеет данных. А данные нельзя отдать модели целиком, потому что у студента, преподавателя и администратора разные права доступа.
+Universities end up between two walls. The model that could help has no data. And the data can't be handed to the model wholesale, because students, teachers and administrators have different access rights.
 
-Navi — слой между ними.
+Navi is the layer between them.
 
-## Как устроено
+## How it works
 
-У каждого агента свой поисковый индекс. Студенческий агент не имеет доступа к регламентам деканата не потому, что ему запретили отвечать, а потому что этих документов нет в его индексе. Модель не может рассказать о том, чего никогда не получала на вход — взламывать промпт бессмысленно.
+Each agent has its own search index. The student agent has no access to the dean's office regulations, not because it was told not to answer, but because those documents are not in its index. A model cannot reveal what it never received as input, so attacking the prompt is pointless.
 
 ```
-Запрос + роль
+Query + role
      ↓
-Поиск только по документам этого агента
+Search only within this agent's documents
      ↓
-Системный промпт роли + найденные фрагменты
+Role system prompt + retrieved passages
      ↓
 YandexGPT
      ↓
-Ответ + источники, из которых он собран
+Answer + the sources it was built from
 ```
 
-Дополнительно сервер проверяет права при обращении к конкретному документу: чужой идентификатор вернёт отказ, а не содержимое.
+In addition, the server checks permissions when a specific document is requested: a foreign document ID returns a denial, not the content.
 
-## Что умеет
+## Features
 
 | | |
 |---|---|
-| Три ролевых агента | Студент, преподаватель, административный сотрудник — у каждого свой набор документов и свой сценарий |
-| Гостевой режим | Общие вопросы об учёбе без входа. Внутренних документов гость не видит |
-| Поиск с источниками | Под ответом видно, из какого документа взят факт, и можно раскрыть точный фрагмент |
-| Суммаризация | Выжимка внутреннего документа вуза или загруженного файла |
-| Библиотека роли | Список доступных агенту документов, выжимка в один клик |
-| Загрузка материалов | Файл попадает в библиотеку, участвует в поиске и переживает перезапуск сервера |
-| Голос | Вопрос голосом и озвучка ответа через ElevenLabs |
-| Три языка | Русский, английский, узбекский — интерфейс и ответы модели |
-| Заявки | Вопрос вне компетенции агента уходит в деканат через n8n |
+| Three role-based agents | Student, teacher, administrative staff. Each has its own set of documents and its own scenario |
+| Guest mode | General study questions without signing in. Guests cannot see internal documents |
+| Search with sources | Under each answer you can see which document a fact came from and expand the exact passage |
+| Summarization | A summary of an internal university document or an uploaded file |
+| Role library | A list of the documents available to the agent, with a one-click summary |
+| Material upload | A file goes into the library, takes part in search, and survives a server restart |
+| Voice | Ask by voice and hear the answer read aloud via ElevenLabs |
+| Three languages | Russian, English, Uzbek: both the interface and the model's answers |
+| Requests | A question outside the agent's competence is sent to the dean's office via n8n |
 
-![Интерфейс](docs/app.png)
+![Interface](docs/app.png)
 
-## Стек
+## Stack
 
-Бэкенд на FastAPI, генерация через YandexGPT, поиск на TF-IDF с отдельным индексом на каждую роль. Фронтенд — React и Vite, без внешних UI-библиотек. Развёрнуто на Render одним Blueprint-файлом.
+Backend on FastAPI, generation via YandexGPT, TF-IDF search with a separate index per role. Frontend in React and Vite, with no external UI libraries. Deployed on Render with a single Blueprint file.
 
-Провайдер модели абстрагирован в `app/llm_client.py`: переключается одной строкой в `.env` между `yandex`, `anthropic`, `gemini` и `groq`, код при этом не меняется.
+The model provider is abstracted in `app/llm_client.py`: switch between `yandex`, `anthropic`, `gemini` and `groq` with one line in `.env`, without changing code.
 
-## Запуск
+## Running locally
 
-**Бэкенд**
+**Backend**
 
 ```bash
 cd backend
@@ -72,26 +74,26 @@ cp .env.example .env
 uvicorn app.main:app --reload --port 8000
 ```
 
-Минимальный `.env`:
+Minimal `.env`:
 
 ```
 LLM_PROVIDER=yandex
 MODEL_NAME=yandexgpt-lite/latest
-YANDEX_API_KEY=<ключ сервисного аккаунта>
-YANDEX_FOLDER_ID=<идентификатор каталога>
+YANDEX_API_KEY=<service account key>
+YANDEX_FOLDER_ID=<folder ID>
 ```
 
-Голос и автоматизации подключаются по желанию:
+Voice and automations are optional:
 
 ```
-ELEVENLABS_API_KEY=<ключ>
-ELEVEN_VOICE_ID=<идентификатор голоса>
-N8N_WEBHOOK_URL=<адрес вебхука>
+ELEVENLABS_API_KEY=<key>
+ELEVEN_VOICE_ID=<voice ID>
+N8N_WEBHOOK_URL=<webhook URL>
 ```
 
-Без них система работает, просто соответствующие кнопки сообщают, что функция недоступна.
+Without them the system still works; the corresponding buttons just report that the feature is unavailable.
 
-**Фронтенд**
+**Frontend**
 
 ```bash
 cd frontend
@@ -100,50 +102,50 @@ cp .env.example .env
 npm run dev
 ```
 
-Открыть `http://localhost:5173`. Демо-вход: `idnavi` / `demo`.
+Open `http://localhost:5173`. Demo login: `idnavi` / `demo`.
 
-## Ключи Yandex Cloud
+## Yandex Cloud keys
 
-1. Консоль каталога → **Сервисные аккаунты** → создать
-2. Назначить роль `ai.languageModels.user` — без неё API вернёт 403
-3. В аккаунте → **Создать новый ключ** → **API-ключ**, область `yc.ai.languageModels.execute`
-4. Секрет показывается один раз, скопируйте сразу
-5. `YANDEX_FOLDER_ID` виден в адресной строке консоли
+1. Folder console → **Service accounts** → create one
+2. Assign the `ai.languageModels.user` role. Without it the API returns 403
+3. In the account → **Create new key** → **API key**, scope `yc.ai.languageModels.execute`
+4. The secret is shown only once, so copy it right away
+5. `YANDEX_FOLDER_ID` is visible in the console address bar
 
-## Деплой
+## Deployment
 
-В корне лежит `render.yaml`, поднимающий оба сервиса.
+The repository root contains `render.yaml`, which brings up both services.
 
-1. Render → **New → Blueprint** → выбрать репозиторий → **Apply**
-2. `navi-backend` → **Environment** → вписать ключи Yandex
-3. Скопировать URL бэкенда → `navi-frontend` → **Environment** → `VITE_API_BASE`
+1. Render → **New → Blueprint** → choose the repository → **Apply**
+2. `navi-backend` → **Environment** → enter the Yandex keys
+3. Copy the backend URL → `navi-frontend` → **Environment** → `VITE_API_BASE`
 4. `navi-frontend` → **Manual Deploy**
 
-Четвёртый шаг обязателен: Vite подставляет переменные при сборке, поэтому смены значения в панели недостаточно.
+The fourth step is required: Vite substitutes variables at build time, so changing the value in the dashboard is not enough.
 
 ## API
 
-| Метод | Путь | Назначение |
+| Method | Path | Purpose |
 |---|---|---|
-| `POST` | `/chat` | Вопрос агенту, ответ с источниками |
-| `POST` | `/summarize` | Выжимка произвольного текста |
-| `GET` | `/documents` | Документы, доступные роли |
-| `POST` | `/summarize_document` | Выжимка внутреннего документа |
-| `POST` | `/documents/upload` | Добавление документа в библиотеку |
-| `POST` | `/tts` · `/stt` | Озвучка и распознавание речи |
-| `GET` | `/voices` | Доступные голоса |
-| `POST` | `/ticket` | Заявка в деканат через n8n |
-| `GET` | `/health` | Проверка состояния |
+| `POST` | `/chat` | Ask an agent a question, get an answer with sources |
+| `POST` | `/summarize` | Summary of arbitrary text |
+| `GET` | `/documents` | Documents available to the role |
+| `POST` | `/summarize_document` | Summary of an internal document |
+| `POST` | `/documents/upload` | Add a document to the library |
+| `POST` | `/tts` · `/stt` | Text-to-speech and speech recognition |
+| `GET` | `/voices` | Available voices |
+| `POST` | `/ticket` | Request to the dean's office via n8n |
+| `GET` | `/health` | Health check |
 
-Интерактивная документация — на `/docs` работающего бэкенда.
+Interactive documentation is at `/docs` on a running backend.
 
-## Автоматизации
+## Automations
 
-В папке `n8n` три готовых сценария и инструкция по подключению: заявки с маршрутизацией по ролям, ежедневная синхронизация библиотеки документов вуза и утренний дайджест для каждой роли.
+The `n8n` folder contains ready-made workflows and setup instructions: role-based request routing, a daily sync of the university's document library, and a morning digest for each role.
 
-События отправляются без ожидания ответа, поэтому недоступный n8n никак не влияет на работу системы.
+Events are sent without waiting for a response, so an unavailable n8n has no effect on the system.
 
-## Проверка перед деплоем
+## Pre-deploy check
 
 ```bash
 cd frontend
@@ -152,49 +154,49 @@ npx esbuild render_test.mjs --bundle --platform=node --format=cjs --outfile=rt.c
 node rt.cjs
 ```
 
-Скрипт рендерит лендинг и приложение на трёх языках в двух темах. Ловит случаи, когда неполный перевод роняет страницу — такое уже случалось.
+The script renders the landing page and the app in three languages and two themes. It catches cases where an incomplete translation crashes the page, which has happened before.
 
-## Структура
+## Structure
 
 ```
 navi/
-├── render.yaml              Blueprint: оба сервиса одним деплоем
+├── render.yaml              Blueprint: both services in one deploy
 ├── backend/
 │   └── app/
-│       ├── main.py          эндпоинты, проверка прав, голос, вебхуки
-│       ├── agents.py        системные промпты четырёх режимов
-│       ├── llm_client.py    абстракция над провайдером модели
-│       ├── rag.py           ролевой поиск и переиндексация
-│       └── data/documents.py  демо-корпус и загруженные документы
+│       ├── main.py          endpoints, permission checks, voice, webhooks
+│       ├── agents.py        system prompts for the four modes
+│       ├── llm_client.py    abstraction over the model provider
+│       ├── rag.py           role-based search and reindexing
+│       └── data/documents.py  demo corpus and uploaded documents
 ├── frontend/src/
-│   ├── Landing.jsx          лендинг
-│   ├── Chat.jsx             приложение
-│   ├── Brand.jsx            знак и иконки
-│   ├── i18n.js              три языка
-│   └── index.css            дизайн-система
-└── n8n/                     сценарии автоматизации
+│   ├── Landing.jsx          landing page
+│   ├── Chat.jsx             the app
+│   ├── Brand.jsx            logo and icons
+│   ├── i18n.js              three languages
+│   └── index.css            design system
+└── n8n/                     automation workflows
 ```
 
-## Дальше
+## What's next
 
-Ближайшее — интеграция с SSO университета, чтобы роль приходила из подписанного токена, и подключение реальной библиотеки документов вуза с переиндексацией по расписанию.
+Next up is integration with the university's SSO so that the role comes from a signed token, and connecting a real university document library with scheduled reindexing.
 
-Затем векторный поиск вместо TF-IDF для корпусов в десятки тысяч документов, интеграция с LMS и системой документооборота, аналитика частых вопросов для деканата.
+After that: vector search instead of TF-IDF for corpora of tens of thousands of documents, integration with LMS and document management systems, and analytics on frequent questions for the dean's office.
 
-Система тиражируется на любой вуз без изменения кода: меняется только набор документов.
+The system is portable to any university without code changes: only the set of documents changes.
 
-## Ограничения прототипа
+## Prototype limitations
 
-Роль выбирается после общего входа, а не приходит из системы аутентификации вуза — в продакшене это должен быть SSO.
+The role is chosen after a shared sign-in rather than coming from the university's authentication system. In production this must be SSO.
 
-Загруженные документы видны всем пользователям своей роли и хранятся в памяти сервера, дублируясь в браузере загрузившего. Постоянное хранилище — следующий шаг.
+Uploaded documents are visible to all users of their role and are kept in server memory, duplicated in the uploader's browser. Persistent storage is the next step.
 
-Ограничения частоты запросов к API нет.
+There is no rate limiting on the API.
 
 ---
 
 <div align="center">
 
-Команда **Navi** · 2026
+**Navi** team · 2026
 
 </div>

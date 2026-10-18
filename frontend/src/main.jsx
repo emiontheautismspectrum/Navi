@@ -5,7 +5,7 @@ import Chat from "./Chat.jsx";
 import "./index.css";
 
 function Root() {
-  // Хеш-роутинг: работает на статическом хостинге без серверных правил
+  // Hash routing: works on static hosting without server rules
   const [route, setRoute] = useState(() => (location.hash === "#/app" ? "app" : "landing"));
   const [lang, setLang] = useState("ru");
   const [theme, setTheme] = useState("dark");
@@ -22,9 +22,9 @@ function Root() {
     document.body.dataset.theme = theme;
   }, [lang, theme]);
 
-  // Запуск системы: круг расходится из точки логотипа и накрывает
-  // экран, под ним подменяется маршрут — переход выглядит как
-  // раскрытие системы из самого знака.
+  // System launch: a circle expands from the logo and covers the
+  // screen, the route is swapped underneath, and the transition looks
+  // like the system unfolding from the mark itself.
   const [burst, setBurst] = useState(null);
 
   const go = (r) => { location.hash = r === "app" ? "#/app" : "#/"; setRoute(r); };
@@ -34,7 +34,7 @@ function Root() {
     const { x, y } = origin;
     const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
     setBurst({ x, y, r });
-    setTimeout(() => go("app"), 380);   // маршрут меняется под накрытым экраном
+    setTimeout(() => go("app"), 380);   // the route changes under the covered screen
     setTimeout(() => setBurst(null), 900);
   }
 

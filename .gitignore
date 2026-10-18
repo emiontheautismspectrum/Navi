@@ -1,10 +1,10 @@
-# ── Секреты (НИКОГДА не коммитить) ──────────────────────────────────────
+# ── Secrets (NEVER commit) ──────────────────────────────────────
 .env
 .env.local
 .env.*.local
 *.pem
 *.key
-# .env.example коммитить нужно — это шаблон без секретов
+# .env.example should be committed: it is a template without secrets
 !.env.example
 
 # ── Python ───────────────────────────────────────────────────────────────
@@ -25,13 +25,13 @@ dist-ssr/
 npm-debug.log*
 yarn-error.log*
 
-# ── Редакторы и ОС ───────────────────────────────────────────────────────
+# ── Editors and OS ───────────────────────────────────────────────────────
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 *.swp
 
-# артефакт локального прогона render_test
+# artifact of a local render_test run
 rt.cjs
 rt.mjs

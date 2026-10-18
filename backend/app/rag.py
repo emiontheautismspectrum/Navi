@@ -1,10 +1,10 @@
 """
-Простой RAG (retrieval-augmented generation) поиск на TF-IDF.
+Simple RAG (retrieval-augmented generation) search on TF-IDF.
 
-Для хакатон-прототипа этого достаточно и не требует внешнего
-embeddings API — работает полностью локально. При желании легко
-заменить на векторную БД (Pinecone/Chroma/pgvector) без изменения
-интерфейса retrieve().
+For a hackathon prototype this is enough, and it needs no external
+embeddings API: it works entirely locally. It can easily be replaced
+with a vector database (Pinecone/Chroma/pgvector) without changing the
+retrieve() interface.
 """
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -14,20 +14,20 @@ from app.data.documents import get_documents_for_role
 
 class RoleAwareRetriever:
     def __init__(self):
-        # Отдельный индекс на роль — это же реализует разграничение
-        # доступа: агент физически не видит документы чужой роли.
+        # A separate index per role is what implements the access
+        # separation: an agent physically cannot see another role's documents.
         self._vectorizers = {}
         self._matrices = {}
         self._docs = {}
-        # guest намеренно отсутствует: у неавторизованного пользователя
-        # нет ни одного внутреннего документа — это не запрет в промпте,
-        # а физическое отсутствие данных.
+        # guest is intentionally absent: an unauthenticated user has no
+        # internal documents. This is not a prompt-level ban but the
+        # physical absence of data.
         for role in ("student", "teacher", "admin"):
             self.reindex(role)
 
     def reindex(self, role: str):
-        """Пересобирает индекс роли. Вызывается при старте и после
-        загрузки нового документа в библиотеку."""
+        """Rebuilds the role's index. Called at startup and after a new
+        document is uploaded to the library."""
         docs = get_documents_for_role(role)
         texts = [f"{d['title']}. {d['content']}" for d in docs]
         vectorizer = TfidfVectorizer()
@@ -47,8 +47,8 @@ class RoleAwareRetriever:
         scores = cosine_similarity(query_vec, matrix)[0]
         ranked = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)
 
-        # Порог отсекает документы, вообще не связанные с запросом,
-        # чтобы агент не тянул в контекст случайный шум.
+        # The threshold drops documents unrelated to the query, so the
+        # agent does not pull random noise into its context.
         results = [(doc, score) for doc, score in ranked if score > 0.05]
         return results[:top_k]
 

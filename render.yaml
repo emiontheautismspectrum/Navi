@@ -1,14 +1,14 @@
-# Render Blueprint — деплой backend + frontend одним кликом.
+# Render Blueprint: deploy backend + frontend in one click.
 #
-# Как использовать:
-# 1. Render Dashboard → New → Blueprint → выберите репозиторий Navi.
-# 2. Render прочитает этот файл и создаст оба сервиса ниже.
-# 3. В navi-backend → Environment впишите YANDEX_API_KEY и YANDEX_FOLDER_ID
-#    (в файле они намеренно пустые: репозиторий публичный, секреты в нём
-#    хранить нельзя).
-# 4. Если backend получит другой адрес, поменяйте VITE_API_BASE ниже
-#    и сделайте Manual Deploy фронтенда: Vite подставляет переменные
-#    при сборке, поэтому сохранения значения в панели недостаточно.
+# How to use:
+# 1. Render Dashboard → New → Blueprint → choose the Navi repository.
+# 2. Render reads this file and creates both services below.
+# 3. In navi-backend → Environment, enter YANDEX_API_KEY and YANDEX_FOLDER_ID
+#    (they are intentionally empty in the file: the repository is public,
+#    so secrets must not be stored in it).
+# 4. If the backend gets a different address, change VITE_API_BASE below
+#    and Manual Deploy the frontend: Vite substitutes variables at build
+#    time, so saving the value in the dashboard is not enough.
 
 services:
   # ── Backend: FastAPI + RAG + LLM ────────────────────────────────────────
@@ -24,27 +24,27 @@ services:
       - key: LLM_PROVIDER
         value: yandex
       - key: YANDEX_API_KEY
-        sync: false        # вписывается вручную в панели Render
+        sync: false        # entered manually in the Render dashboard
       - key: YANDEX_FOLDER_ID
-        sync: false        # вписывается вручную в панели Render
+        sync: false        # entered manually in the Render dashboard
       - key: PYTHON_VERSION
         value: 3.12.0
 
-  # ── Frontend: React + Vite, статическая сборка ──────────────────────────
-  # Пути указаны от корня репозитория (без rootDir) — так требует
-  # спецификация Blueprint для статических сайтов.
+  # ── Frontend: React + Vite, static build ──────────────────────────
+  # Paths are given from the repository root (no rootDir), as the
+  # Blueprint spec requires for static sites.
   - type: web
     name: navi-frontend
     runtime: static
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
     envVars:
-      # Реальный адрес backend. Раньше здесь стоял плейсхолдер, и при
-      # каждой синхронизации Blueprint он перезаписывал значение,
-      # выставленное в панели, — фронтенд начинал стучаться в никуда.
+      # The real backend address. This used to be a placeholder, and on
+      # every Blueprint sync it overwrote the value set in the dashboard,
+      # so the frontend started calling a non-existent address.
       - key: VITE_API_BASE
         value: https://navi-backend-2x2q.onrender.com
     routes:
       - type: rewrite
         source: /*
-        destination: /index.html   # SPA-роутинг
+        destination: /index.html   # SPA routing
